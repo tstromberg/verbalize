@@ -1,0 +1,13 @@
+<script type="text/javascript" src="third_party/jquery/jquery.js"></script>
+<script type="text/javascript" src="third_party/wymeditor/jquery.wymeditor.min.js"></script>
+<script>
+  jQuery(function() {
+    jQuery('.wymeditor').wymeditor();
+  });
+</script>
+
+    <form action="/submit" method="post">
+	  <div>Title: <input type="text" name="title" /></div>
+      <div><textarea name="content" rows="40" cols="60" class="wymeditor"></textarea></div>
+      <div><input type="submit" value="Add Entry" class="wymupdate"></div>
+    </form>
