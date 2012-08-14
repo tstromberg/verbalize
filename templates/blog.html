@@ -1,10 +1,12 @@
-{{ range .Entries }}
-<article>
-  <header>
-    <h1>{{.Title}}</h1>
-    <div class="author">{{.Author}}</div>
-    <div class="date">{{.PublishDate}}</div>
-  </header>
-
-  <p>{{.Content}}</p>
-{{end}}
+{{ define "content" }}
+  {{ range .Entries }}
+          <article>
+            <header>
+              <h1>{{.Title}}</h1>
+              <div class="author">{{.Author}}</div>
+              <div class="date">{{.PublishDate}}</div>
+            </header>
+            <p>{{.Content }}</p>
+          </article>
+  {{ end }}
+{{ end }}

@@ -5,32 +5,49 @@ import (
 	"appengine/datastore"
 	"appengine/user"
 	"html/template"
+	"log"
 	"net/http"
 	"strings"
 	"time"
 )
 
-type Entry struct {
+const (
+	VERSION   = "zero.2012_08_12"
+	SITE_NAME = "ver&bull;bal&bull;ize"
+)
+
+type StoredEntry struct {
 	Author      string
 	PublishDate time.Time
 	Title       string
-	Intro       string
-	Content     string
+	Content     []byte
+	RelativeUrl string
+}
+
+/* a mirror of StoredEntry, with markings for raw HTML encoding. */
+type TemplateEntry struct {
+	Author      string
+	PublishDate time.Time
+	Title       string
+	Content     template.HTML
 	RelativeUrl string
 }
 
 type TemplateContext struct {
-	SiteName string
+	SiteName template.HTML
 	Version  string
-	Entries  []Entry
+	Title    template.HTML
+	Entries  []TemplateEntry
 }
 
 var (
-	templates = template.Must(template.ParseFiles(
-		"header.html",
-		"blog.html",
-		"edit.html",
-		"footer.html",
+	blog_tmpl = template.Must(template.ParseFiles(
+		"templates/base.html",
+		"templates/blog.html",
+	))
+	edit_tmpl = template.Must(template.ParseFiles(
+		"templates/base.html",
+		"templates/edit.html",
 	))
 )
 
@@ -42,44 +59,59 @@ func init() {
 }
 
 // Render a named template name to the HTTP channel
-func renderTemplate(w http.ResponseWriter, name string, context interface{}) {
-	err := templates.ExecuteTemplate(w, name, context)
+func renderTemplate(w http.ResponseWriter, tmpl template.Template, context interface{}) {
+	err := tmpl.ExecuteTemplate(w, "base.html", context)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
-// Render a full page using multiple templates
-func renderPage(w http.ResponseWriter, name string, context interface{}) {
-	renderTemplate(w, "header.html", context)
-	renderTemplate(w, name, context)
-	renderTemplate(w, "footer.html", context)
-}
-
 // HTTP handler for /
 func root(w http.ResponseWriter, r *http.Request) {
-	c := appengine.NewContext(r)
-	q := datastore.NewQuery("Entries").Order("-PublishDate").Limit(10)
-	entries := make([]Entry, 0, 10)
-	if _, err := q.GetAll(c, &entries); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+	context := appengine.NewContext(r)
+	query := datastore.NewQuery("Entries").Order("-PublishDate").Limit(10)
+	template_entries := make([]TemplateEntry, 10)
+
+	/* TODO(tstromberg): Do I really need to do this? */
+	counter := 0
+
+	for cursor := query.Run(context); ; {
+		var stored_entry StoredEntry
+		_, err := cursor.Next(&stored_entry)
+		if err == datastore.Done {
+			break
+		}
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		log.Println(counter)
+		log.Println(stored_entry.Title)
+		counter++
+		template_entries[counter] = TemplateEntry{
+			Author:      stored_entry.Author,
+			PublishDate: stored_entry.PublishDate,
+			Title:       stored_entry.Title,
+			Content:     template.HTML(stored_entry.Content),
+			RelativeUrl: stored_entry.RelativeUrl,
+		}
 	}
-	context := TemplateContext{
-		SiteName: "verbalize",
-		Version:  "0.01",
-		Entries:  entries,
+	template_context := TemplateContext{
+		SiteName: SITE_NAME,
+		Version:  VERSION,
+		Entries:  template_entries,
+		Title:    "blog entries",
 	}
-	renderPage(w, "blog.html", context)
+	renderTemplate(w, *blog_tmpl, template_context)
 }
 
 // HTTP handler for /edit
 func edit(w http.ResponseWriter, r *http.Request) {
 	context := TemplateContext{
-		SiteName: "verbalize",
-		Version:  "0.01",
+		SiteName: SITE_NAME,
+		Version:  VERSION,
 	}
-	renderPage(w, "edit.html", context)
+	renderTemplate(w, *edit_tmpl, context)
 }
 
 // HTTP handler for /submit - submits a blog entry into datastore
@@ -96,8 +128,8 @@ func submit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	c := appengine.NewContext(r)
-	g := Entry{
-		Content:     content,
+	g := StoredEntry{
+		Content:     []byte(content),
 		Title:       title,
 		PublishDate: time.Now(),
 	}
