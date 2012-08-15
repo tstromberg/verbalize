@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>{{ .Title }}</title>
+  <meta charset="UTF-8">
+  <link href='http://fonts.googleapis.com/css?family=Playfair+Display|Open+Sans:300italic,400,300,600,700,800|Merriweather:400,900,700,300' rel='stylesheet' type='text/css'>
+  <link rel="stylesheet" href="/stylesheets/style.css">
+</head>
+<body>
+  <div id="wrapper">
+    <header>
+      <h1>{{ .SiteName }}</h1>
+      <nav></nav>
+    </header>
+
+    <div id="content">
+      {{ template "content" . }}
+    </div>
+
+    <footer>powered by verbalize {{ .Version }}</footer>
+  </div>
+</body>
+</html>
