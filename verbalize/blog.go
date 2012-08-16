@@ -14,16 +14,18 @@ import (
 )
 
 const (
-	VERSION = "zero.2012_08_12"
-
-	SITE_NAME     = "ver&bull;bal&bull;ize"
-	DISQUS_ID     = ""
-	MORE_TAG      = "<!--more-->"
+	// TODO(tstromberg): Move user config into YAML
+	SITE_NAME     = "foci"
+	DISQUS_ID     = "tstromberg-blog"
 	BASE_URL      = "http://localhost:8080"
 	AUTHOR_NAME   = "unknown"
 	AUTHOR_EMAIL  = "nobody@[127.0.0.1]"
 	SITE_TITLE    = "verbalize"
 	SITE_SUBTITLE = "AppEngine+Go Blogging Engine"
+
+	// Internal constants
+	MORE_TAG = "<!--more-->"
+	VERSION  = "zero.2012_08_16"
 )
 
 type Entry struct {
@@ -85,6 +87,7 @@ type TemplateContext struct {
 	UpdateTime   string
 	Title        template.HTML
 	Entries      []EntryContext
+	DisqusId     string
 }
 
 var (
@@ -157,6 +160,7 @@ func GetTemplateEntries(r *http.Request, slug string, count int) (t TemplateCont
 		UpdateTime:   time.Now().Format(time.RFC3339),
 		Entries:      entry_contexts,
 		Title:        "blog entries",
+		DisqusId:     DISQUS_ID,
 	}
 	return t, err
 }
@@ -184,7 +188,7 @@ func root(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		renderTemplate(w, *archive_tmpl, context)
+		renderTemplate(w, *entry_tmpl, context)
 		rendered = true
 	}
 

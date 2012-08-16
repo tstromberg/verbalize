@@ -5,8 +5,19 @@
               <a href="{{.Url}}"><h1>{{.Title}}</h1></a>
               <div class="author">{{.Author}}</div>
               <div class="date">{{.Year}}-{{.Month}}-{{.Day}}</div>
+              <a class="comment_count" href="{{.Url}}#disqus_thread"></a>
             </header>
             <p>{{.Excerpt }}</p>
           </article>
   {{ end }}
+
+  <script type="text/javascript">
+  var disqus_shortname = '{{.DisqusId}}';
+  (function () {
+      var s = document.createElement('script'); s.async = true;
+      s.type = 'text/javascript';
+      s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+      (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+  }());
+  </script>
 {{ end }}
