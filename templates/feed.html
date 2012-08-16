@@ -1,0 +1,17 @@
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>{{.SiteTitle}}</title>
+  <subtitle>{{.SiteSubTitle}}</subtitle>
+  <link href="{{.SiteUrl}}/feed/" rel="self" />
+  <updated>{{.UpdateTime}}</updated>
+  <id>{{.SiteUrl}}/</id>
+  {{ range .Entries }}
+  <entry>
+    <title>{{.Title}}</title>
+    <link href="{{.Url}}"></link>
+    <id>{{.Url}}</id>
+    <updated>{{.RfcDate}}</updated>
+    <summary type="html">{{.EscapedExcerpt}}</summary>
+    <author><name>{{.Author}}</name></author>
+  </entry>
+  {{ end }}
+</feed>

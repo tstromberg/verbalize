@@ -2,11 +2,11 @@
   {{ range .Entries }}
           <article>
             <header>
-              <a href="{{.RelativeUrl}}"><h1>{{.Title}}</h1></a>
+              <a href="{{.Url}}"><h1>{{.Title}}</h1></a>
               <div class="author">{{.Author}}</div>
               <div class="date">{{.Year}}-{{.Month}}-{{.Day}}</div>
             </header>
-            <p>{{.Content }}</p>
+            <p>{{.Excerpt }}</p>
           </article>
   {{ end }}
 {{ end }}
