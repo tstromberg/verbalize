@@ -4,6 +4,7 @@ import (
 	"appengine"
 	"appengine/datastore"
 	"appengine/user"
+	"bytes"
 	"fmt"
 	"html/template"
 	"log"
@@ -24,7 +25,9 @@ const (
 	SITE_SUBTITLE = "AppEngine+Go Blogging Engine"
 
 	// Internal constants
-	MORE_TAG = "<!--more-->"
+	// Note: <!--more--> is what wordpress uses. wymeditor removes comments,
+	// making this somewhat annoying to use.
+	MORE_TAG = "[[more]]"
 	VERSION  = "zero.2012_08_16"
 )
 
@@ -58,7 +61,12 @@ type EntryContext struct {
 
 /* Entry.Context() generates template data from a stored entry */
 func (e *Entry) Context() EntryContext {
+	content := bytes.Replace(e.Content, []byte(MORE_TAG), []byte("<!--more-->"),
+1)
+	log.Printf("CON: %s", content)
 	excerpt := strings.SplitN(string(e.Content), MORE_TAG, 2)[0]
+	log.Printf("EXC: %s", excerpt)
+
 	return EntryContext{
 		Author:         e.Author,
 		Timestamp:      e.PublishDate.UTC().Unix(),
@@ -70,7 +78,7 @@ func (e *Entry) Context() EntryContext {
 		Year:           e.PublishDate.Year(),
 		RfcDate:        e.PublishDate.Format(time.RFC3339),
 		Title:          e.Title,
-		Content:        template.HTML(e.Content),
+		Content:        template.HTML(content),
 		Excerpt:        template.HTML(excerpt),
 		EscapedExcerpt: excerpt,
 		Url:            BASE_URL + "/" + e.RelativeUrl,
@@ -222,6 +230,7 @@ func edit(w http.ResponseWriter, r *http.Request) {
 
 // HTTP handler for /submit - submits a blog entry into datastore
 func submit(w http.ResponseWriter, r *http.Request) {
+	log.Printf("Form content: %s", r.FormValue("content"))
 	content := strings.TrimSpace(r.FormValue("content"))
 	title := strings.TrimSpace(r.FormValue("title"))
 	slug := strings.TrimSpace(r.FormValue("slug"))
@@ -254,5 +263,6 @@ func submit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Printf("Saved new entry: %v", entry)
+	log.Printf("Content: %s", entry.Content)
 	http.Redirect(w, r, "/", http.StatusFound)
 }
