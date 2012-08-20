@@ -1,0 +1,12 @@
+{{ define "content" }}
+  <table id="entries">
+  {{ range .Entries }}
+  <tr>
+    <td><a href="edit/{{.Slug}}">{{.Slug}}</a></td>
+    <td>{{.RfcDate}}</td>
+    <td>{{.Title}}</td>
+    <td>{{.IsPublished}}</td>
+  </tr>
+  {{ end }}
+</table>
+{{ end }}

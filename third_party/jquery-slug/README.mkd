@@ -1,0 +1,20 @@
+jQuery Slug 1.0
+===============
+
+jQuery Slug is a powerful plugin that makes it easy to transform strings into slugs.
+
+Use
+---
+    $('.slug_get').keyup(function() {
+        slug = $.slug( $(this).val() );
+        $('.slug_return').val(slug);
+    });
+    
+    $("#example-input-field").slug({
+        'target': $('#slug')
+    });
+    
+    $("#example-1 input").slug(function(slug) {
+        var $this = this;
+        $this.next().text(slug);
+    });

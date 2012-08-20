@@ -1,0 +1,34 @@
+--- /home/tstromberg/src/jquery-slug/jquery.slug.js	2012-08-19 22:35:14.277385745 -0700
++++ ./jquery.slug.js	2012-08-19 23:08:38.733297557 -0700
+@@ -60,7 +60,8 @@
+         'Ĳ': 'IJ',
+         'ĳ': 'ij',
+         'Œ': 'OE',
+-        'ƒ': 'f'
++        'ƒ': 'f',
++        "'": '',
+     };
+     
+     /**
+@@ -71,10 +72,10 @@
+     $.slug = function(string, replacement, map) {
+         
+         if($.type(replacement) == 'undefined') {
+-            replacement = '_';
++            replacement = '-';
+         } else if($.type(replacement) == 'object') {
+             map = replacement;
+-            replacement = '_';
++            replacement = '-';
+         }
+         
+         transliteration['[^a-zA-Z0-9]'] = replacement;
+@@ -93,6 +94,8 @@
+             slug = slug.replace(re, value);
+         });
+         
++        // clean up trailing and repeated underscores
++        slug = slug.replace(/-$/, '').replace(/-{2,}/, '-');
+         return slug;
+         
+     };
