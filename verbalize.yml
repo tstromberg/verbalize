@@ -1,0 +1,17 @@
+title: sprocket i/o
+subtitle: Thomas Stromberg
+description: Shallow thoughts from a systems engineer.
+
+author: Thomas Stromberg
+author_email: t+verbalize@stromberg.org
+
+# For comments, you must register at http://disqus.com/
+disqus_id: tstromberg-blog
+
+# Where is this application serving from?
+subdirectory: /
+
+entries_per_page: 5
+
+# Note: <!--more--> is what wordpress uses. wymeditor removes comments,
+more_tag:     '[[more]]'
