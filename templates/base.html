@@ -8,16 +8,36 @@
 </head>
 <body>
   <div id="wrapper">
-    <header>
+    <header id="left">
+      <div id="sitelogo"><img src="/images/{{.SiteLogo}}"></div>
       <h1>{{ .SiteName }}</h1>
-      <nav></nav>
+      <h2>{{ .SiteSubTitle }}</h2>
+      <p id="site_description">{{ .SiteDescription }}</p>
+      <nav id="links">
+      <ul>
+        {{ range .Links }}
+        <li><a href="{{.Url}}">{{.Title}}</a></li>
+        {{ end }}
+        <li><a href="/feed">feed</a></li>
+      </ul>
+      </nav>
+      <div id="powered"><a href="https://github.com/tstromberg/verbalize">verbalize {{ .Version }}</a></div>
     </header>
+
+    <section id="date">
+    <h3>
+      <script lang="javascript">
+        date = new Date({{.PageTimestamp}});
+        document.write(date.toLocaleDateString());
+      </script>
+    </h3>
+    </section>
 
     <div id="content">
       {{ template "content" . }}
     </div>
 
-    <footer>powered by verbalize {{ .Version }}</footer>
+
   </div>
 </body>
 </html>

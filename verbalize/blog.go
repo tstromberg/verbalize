@@ -16,13 +16,15 @@ import (
 
 const (
 	// TODO(tstromberg): Move user config into YAML
-	SITE_NAME        = "foci"
+	SITE_NAME        = "sprocket i/o"
 	DISQUS_ID        = "tstromberg-blog"
 	BASE_URL         = "http://localhost:8080"
 	AUTHOR_NAME      = "unknown"
 	AUTHOR_EMAIL     = "nobody@[127.0.0.1]"
 	SITE_TITLE       = "verbalize"
-	SITE_SUBTITLE    = "AppEngine+Go Blogging Engine"
+	SITE_SUBTITLE    = "Thomas Stromberg"
+	SITE_DESCRIPTION        = "Shallow thoughts from a systems engineer."
+	SITE_LOGO        = "metal_steampunk.svg"
 	ENTRIES_PER_PAGE = 5
 
 	// Internal constants
@@ -98,15 +100,19 @@ func (e *Entry) Context() EntryContext {
 
 /* This is sent to all templates */
 type TemplateContext struct {
-	SiteName     template.HTML
-	SiteUrl      string
-	SiteTitle    string
-	SiteSubTitle string
-	Version      string
-	UpdateTime   string
-	Title        string
-	Entries      []EntryContext
-	DisqusId     string
+	SiteName        template.HTML
+	SiteUrl         string
+	SiteTitle       string
+	SiteSubTitle    string
+	SiteLogo        string
+	SiteDescription string
+	Version         string
+	PageTimeRfc3339 string
+	PageTimestamp   int64
+	Title           string
+	Entries         []EntryContext
+	Links           []Link
+	DisqusId        string
 }
 
 /* Structure used for querying for blog entries */
@@ -115,6 +121,11 @@ type EntryQuery struct {
 	End   time.Time
 	Count int
 	Tag   string // unused
+}
+
+type Link struct {
+	Title string
+	Url   string
 }
 
 var (
@@ -169,16 +180,21 @@ func GetTemplateContext(entries []Entry, title string) (t TemplateContext, err e
 	for _, entry := range entries {
 		entry_contexts = append(entry_contexts, entry.Context())
 	}
+	unix_seconds := time.Now().Unix()
+
 	t = TemplateContext{
-		SiteName:     SITE_NAME,
-		SiteUrl:      BASE_URL,
-		SiteTitle:    SITE_TITLE,
-		SiteSubTitle: SITE_SUBTITLE,
-		Version:      VERSION,
-		UpdateTime:   time.Now().Format(time.RFC3339),
-		Entries:      entry_contexts,
-		Title:        title,
-		DisqusId:     DISQUS_ID,
+		SiteName:        SITE_NAME,
+		SiteUrl:         BASE_URL,
+		SiteTitle:       SITE_TITLE,
+		SiteSubTitle:    SITE_SUBTITLE,
+		SiteDescription: SITE_DESCRIPTION,
+		SiteLogo:        SITE_LOGO,
+		Version:         VERSION,
+		PageTimeRfc3339: time.Now().Format(time.RFC3339),
+		PageTimestamp:   unix_seconds * 1000,
+		Entries:         entry_contexts,
+		Title:           title,
+		DisqusId:        DISQUS_ID,
 	}
 	return t, err
 }
