@@ -9,10 +9,10 @@
 <body>
   <div id="wrapper">
     <header id="left">
-      <div id="sitelogo"><img src="/images/{{.SiteLogo}}"></div>
-      <h1>{{ .SiteName }}</h1>
-      <h2>{{ .SiteSubTitle }}</h2>
-      <p id="site_description">{{ .SiteDescription }}</p>
+    <div id="sitelogo"><a href="{{.BaseUrl}}"><img src="/images/sprocket.jpg"></a></div>
+      <h1>{{ .Title }}</h1>
+      <h2>{{ .SubTitle }}</h2>
+      <p id="site_description">{{ .Description }}</p>
       <nav id="links">
       <ul>
         {{ range .Links }}
@@ -36,8 +36,6 @@
     <div id="content">
       {{ template "content" . }}
     </div>
-
-
   </div>
 </body>
 </html>

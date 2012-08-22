@@ -51,9 +51,12 @@ h2 {
   display: block;
 }
 
+#content {
+  margin-left: 265px;
+}
+
 #content article {
   border-top: 1px solid #CCC;
-  margin-left: 250px;
   display: block;
   padding: 3em;
 }
@@ -143,4 +146,20 @@ header .date {
   font-size: small;
   font-weight: 300;
   bottom: 1em;
+}
+
+#disqus_thread {
+  width: 40em;
+  margin-left: 3em;
+  padding: 3em;
+  background-color: #FFF;
+  border: 1px solid #F5F5F5;
+}
+
+#admin {
+  padding: 3em;
+}
+
+#entries td {
+  background-color: #FFF;
 }

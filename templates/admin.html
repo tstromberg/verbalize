@@ -1,4 +1,5 @@
 {{ define "content" }}
+<div id="admin">
   <table id="entries">
   {{ range .Entries }}
   <tr>
@@ -8,5 +9,6 @@
     <td>{{.IsPublished}}</td>
   </tr>
   {{ end }}
-</table>
+  </table>
+</div>
 {{ end }}

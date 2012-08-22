@@ -1,14 +1,14 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
-  <title>{{.SiteTitle}}</title>
-  <subtitle>{{.SiteSubTitle}}</subtitle>
-  <link href="{{.SiteUrl}}/feed/" rel="self" />
-  <updated>{{.PageTimeRcfc3339}}</updated>
-  <id>{{.SiteUrl}}/</id>
+  <title>{{.Title}}</title>
+  <subtitle>{{.SubTitle}}</subtitle>
+  <link href="{{.BaseUrl}}/feed/" rel="self" />
+  <updated>{{.PageTimeRfc3339}}</updated>
+  <id>{{.BaseUrl}}</id>
   {{ range .Entries }}
   <entry>
-    <title>{{.Title}}</title>
-    <link href="{{.Url}}"></link>
-    <id>{{.Url}}</id>
+  <title>{{.Title}}</title>
+    <link href="{{$.BaseUrl}}{{.RelativeUrl}}"></link>
+    <id>{{.RelativeUrl}}</id>
     <updated>{{.RfcDate}}</updated>
     <summary type="html">{{.EscapedExcerpt}}</summary>
     <author><name>{{.Author}}</name></author>

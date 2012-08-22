@@ -10,29 +10,16 @@ import (
 	"log"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
+	"third_party/go-gypsy/yaml"
 	"time"
 )
 
 const (
-	// TODO(tstromberg): Move user config into YAML
-	SITE_NAME        = "sprocket i/o"
-	DISQUS_ID        = "tstromberg-blog"
-	BASE_URL         = "http://localhost:8080"
-	AUTHOR_NAME      = "unknown"
-	AUTHOR_EMAIL     = "nobody@[127.0.0.1]"
-	SITE_TITLE       = "verbalize"
-	SITE_SUBTITLE    = "Thomas Stromberg"
-	SITE_DESCRIPTION        = "Shallow thoughts from a systems engineer."
-	SITE_LOGO        = "metal_steampunk.svg"
-	ENTRIES_PER_PAGE = 5
-
 	// Internal constants
-	// Note: <!--more--> is what wordpress uses. wymeditor removes comments,
-	// making this somewhat annoying to use.
-	MORE_TAG        = "[[more]]"
-	VERSION         = "zero.2012_08_16"
-	MAX_ENTRY_SLOTS = 100 // No page should ever request more than this
+	CONFIG_PATH = "verbalize.yml"
+	VERSION     = "zero.2012_08_21"
 )
 
 type Entry struct {
@@ -66,17 +53,16 @@ type EntryContext struct {
 	Content        template.HTML
 	Excerpt        template.HTML
 	EscapedExcerpt string
-	Url            string
+	RelativeUrl    string
 	Slug           string
 }
 
 /* Entry.Context() generates template data from a stored entry */
 func (e *Entry) Context() EntryContext {
-	content := bytes.Replace(e.Content, []byte(MORE_TAG), []byte("<!--more-->"),
-		1)
-	log.Printf("CON: %s", content)
-	excerpt := strings.SplitN(string(e.Content), MORE_TAG, 2)[0]
-	log.Printf("EXC: %s", excerpt)
+	content := bytes.Replace(e.Content, []byte(config.Require("more_tag")),
+		[]byte("<!-- more tag -->"), 1)
+	excerpt := strings.SplitN(string(e.Content), config.Require("more_tag"),
+		2)[0]
 
 	return EntryContext{
 		Author:         e.Author,
@@ -93,26 +79,25 @@ func (e *Entry) Context() EntryContext {
 		Content:        template.HTML(content),
 		Excerpt:        template.HTML(excerpt),
 		EscapedExcerpt: excerpt,
-		Url:            BASE_URL + "/" + e.RelativeUrl,
+		RelativeUrl:    e.RelativeUrl,
 		Slug:           e.Slug,
 	}
 }
 
 /* This is sent to all templates */
 type TemplateContext struct {
-	SiteName        template.HTML
-	SiteUrl         string
-	SiteTitle       string
-	SiteSubTitle    string
-	SiteLogo        string
-	SiteDescription string
+	Title           string
+	SubTitle        string
+	BaseUrl         template.HTML
+	PageTitle       string
+	Description     string
 	Version         string
 	PageTimeRfc3339 string
 	PageTimestamp   int64
-	Title           string
 	Entries         []EntryContext
 	Links           []Link
 	DisqusId        string
+	Hostname        template.HTML
 }
 
 /* Structure used for querying for blog entries */
@@ -129,6 +114,8 @@ type Link struct {
 }
 
 var (
+	config = yaml.ConfigFile(CONFIG_PATH)
+
 	archive_tmpl = template.Must(template.ParseFiles(
 		"templates/base.html",
 		"templates/archive.html",
@@ -171,37 +158,42 @@ func init() {
 func renderTemplate(w http.ResponseWriter, tmpl template.Template, context interface{}) {
 	err := tmpl.ExecuteTemplate(w, "base.html", context)
 	if err != nil {
+		log.Printf("ERROR: %s", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
-func GetTemplateContext(entries []Entry, title string) (t TemplateContext, err error) {
+func GetTemplateContext(entries []Entry, title string, r *http.Request) (t TemplateContext, err error) {
 	entry_contexts := make([]EntryContext, 0, len(entries))
 	for _, entry := range entries {
 		entry_contexts = append(entry_contexts, entry.Context())
 	}
-	unix_seconds := time.Now().Unix()
+
+	/* See https://groups.google.com/forum/?fromgroups=#!topic/golang-nuts/ANpkd4zyjLU */
+	scheme := "http"
+	if r.TLS != nil {
+		scheme = "https"
+	}
+	base_url := scheme + "://" + r.Host + config.Require("subdirectory")
 
 	t = TemplateContext{
-		SiteName:        SITE_NAME,
-		SiteUrl:         BASE_URL,
-		SiteTitle:       SITE_TITLE,
-		SiteSubTitle:    SITE_SUBTITLE,
-		SiteDescription: SITE_DESCRIPTION,
-		SiteLogo:        SITE_LOGO,
+		BaseUrl:         template.HTML(base_url),
+		Title:           config.Require("title"),
+		SubTitle:        config.Require("subtitle"),
+		Description:     config.Require("description"),
 		Version:         VERSION,
 		PageTimeRfc3339: time.Now().Format(time.RFC3339),
-		PageTimestamp:   unix_seconds * 1000,
+		PageTimestamp:   time.Now().Unix() * 1000,
 		Entries:         entry_contexts,
-		Title:           title,
-		DisqusId:        DISQUS_ID,
+		PageTitle:       title,
+		DisqusId:        config.Require("disqus_id"),
 	}
 	return t, err
 }
 
 func GetEntries(c appengine.Context, params EntryQuery) (entries []Entry, err error) {
 	if params.Count == 0 {
-		params.Count = ENTRIES_PER_PAGE
+		params.Count, _ = strconv.Atoi(config.Require("entries_per_page"))
 	}
 	q := datastore.NewQuery("Entries").Order("-PublishDate").Limit(params.Count)
 	if params.Start.IsZero() {
@@ -247,16 +239,17 @@ func root(w http.ResponseWriter, r *http.Request) {
 	if len(entries) == 0 {
 		http.Error(w, "Nothing to see here.", http.StatusNotFound)
 	} else {
-		context, _ := GetTemplateContext(entries, title)
+		context, _ := GetTemplateContext(entries, title, r)
 		renderTemplate(w, template, context)
 	}
 }
 
 // HTTP handler for /feed
 func feed(w http.ResponseWriter, r *http.Request) {
+	log.Printf("%v", r.URL)
 	c := appengine.NewContext(r)
 	entries, _ := GetEntries(c, EntryQuery{})
-	context, _ := GetTemplateContext(entries, "feed")
+	context, _ := GetTemplateContext(entries, "feed", r)
 	err := feed_tmpl.Execute(w, context)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -267,7 +260,7 @@ func feed(w http.ResponseWriter, r *http.Request) {
 func admin(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 	entries, _ := GetEntries(c, EntryQuery{})
-	context, _ := GetTemplateContext(entries, "Admin")
+	context, _ := GetTemplateContext(entries, "Admin", r)
 	err := admin_tmpl.Execute(w, context)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -286,7 +279,7 @@ func edit(w http.ResponseWriter, r *http.Request) {
 		entries = append(entries, entry)
 		title = entries[0].Title
 	}
-	context, _ := GetTemplateContext(entries, title)
+	context, _ := GetTemplateContext(entries, title, r)
 	renderTemplate(w, *edit_tmpl, context)
 }
 
