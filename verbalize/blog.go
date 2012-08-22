@@ -52,18 +52,19 @@ type EntryContext struct {
 	Title          string
 	Content        template.HTML
 	Excerpt        template.HTML
-	EscapedExcerpt string
+	EscapedExcerpt []byte
+	IsExcerpted    bool
 	RelativeUrl    string
 	Slug           string
 }
 
 /* Entry.Context() generates template data from a stored entry */
 func (e *Entry) Context() EntryContext {
+	log.Printf("More tag is: %v", config.Require("more_tag"))
 	content := bytes.Replace(e.Content, []byte(config.Require("more_tag")),
 		[]byte("<!-- more tag -->"), 1)
-	excerpt := strings.SplitN(string(e.Content), config.Require("more_tag"),
+	excerpt := bytes.SplitN(e.Content, []byte(config.Require("more_tag")),
 		2)[0]
-
 	return EntryContext{
 		Author:         e.Author,
 		IsPublished:    e.IsPublished,
@@ -79,6 +80,7 @@ func (e *Entry) Context() EntryContext {
 		Content:        template.HTML(content),
 		Excerpt:        template.HTML(excerpt),
 		EscapedExcerpt: excerpt,
+		IsExcerpted:    len(content) != len(excerpt),
 		RelativeUrl:    e.RelativeUrl,
 		Slug:           e.Slug,
 	}

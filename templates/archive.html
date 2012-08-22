@@ -11,6 +11,9 @@
 
             </header>
             <p>{{.Excerpt }}</p>
+            {{ if .IsExcerpted }}
+            <div class="more"><a href="{{$.BaseUrl}}{{.RelativeUrl}}">Read more</a></div>
+            {{ end }}
           </article>
   {{ end }}
 
