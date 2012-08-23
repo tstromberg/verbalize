@@ -1,38 +1,40 @@
-{{ define "content" }}
+{{ define "stylesheets" }}
+<link rel="stylesheet" type="text/css" href="/third_party/bootstrap-wysihtml5/css/bootstrap-wysihtml5.css"></link>
+<link rel="stylesheet" type="text/css" href="/third_party/bootstrap-wysihtml5/css/bootstrap.min.css"></link>
+{{ end }}
 
-<script type="text/javascript" src="/third_party/jquery/jquery.js"></script>
-<script type="text/javascript" src="/third_party/jquery-slug/jquery.slug.js"></script>
-<script type="text/javascript" src="/third_party/wymeditor/jquery.wymeditor.min.js"></script>
 
-  <form action="/submit" method="post">
-  {{ range .Entries }}
-      <div>Title: <input type="text" name="title" value="{{.Title}}"/></div>
-      <input type="hidden" name="slug" value="{{.Slug}}"/>
-      <div><textarea name="content" rows="60" cols="60" class="wymeditor">{{.Content}}</textarea></div>
-  {{ else }}
-      <div>Title: <input type="text" id="title" name="title"/></div>
-      <div>Slug: <input type="text" id="slug" name="slug"/></div>
-      <div><textarea name="content" rows="60" cols="60" class="wymeditor"></textarea></div>
-
-      <script>
-        $('#title').keyup(function() {
-          slug = $.slug( $(this).val() );
-          $('#slug').val(slug);
-        });
-      </script>
-  {{ end }}
-      <div><input type="submit" value="Save Post" class="wymupdate"></div>
-  </form>
-  
-  
+{{ define "scripts" }}
+<script src="/third_party/bootstrap-wysihtml5/js/wysihtml5-0.3.0.js"></script>
+<script src="/third_party/bootstrap-wysihtml5/js/jquery-1.7.2.min.js"></script>
+<script src="/third_party/bootstrap-wysihtml5/js/bootstrap.min.js"></script>
+<script src="/third_party/bootstrap-wysihtml5/js/bootstrap-wysihtml5.min.js"></script>
+<script src="/third_party/jquery-slug/jquery.slug.js"></script>
 <script>
-  jQuery(function() {
-    jQuery('.wymeditor').wymeditor();
+  // update the #slug field automagically from the #title field
+  $('#title').keyup(function() {
+    slug = $.slug( $(this).val() );
+    $('#slug').val(slug);
   });
+
+  // enable wysihtml5 on the editor box.
+  $('.textarea').wysihtml5({"html": true});
 </script>
+{{ end }}
 
 
-  
+{{ define "content" }}
+    <div class="hero-unit">
+    <h1>New Post <small>What does the world need to hear?</small></h1>
+    <hr/>
+
+    <form action="/submit" method="post">
+      <div><input type="text" id="title" name="title" placeholder="Enter title..."/>
+        Slug: <input type="text" id="slug" name="slug" placeholder="..."/></div>
+      <textarea class="textarea" placeholder="Enter text ..." name="content" id="edit_content"></textarea>
+      <div><input type="submit" value="Save Post"></div>
+    </form>
+  </div>
 {{ end }}
 
 

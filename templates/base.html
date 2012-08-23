@@ -5,6 +5,7 @@
   <meta charset="UTF-8">
   <link href='http://fonts.googleapis.com/css?family=Playfair+Display|Open+Sans:300italic,400,300,600,700,800|Merriweather:400,900,700,300' rel='stylesheet' type='text/css'>
   <link rel="stylesheet" href="/stylesheets/style.css">
+  {{ template "stylesheets" . }}
 </head>
 <body>
   <div id="wrapper">
@@ -37,5 +38,6 @@
       {{ template "content" . }}
     </div>
   </div>
+  {{ template "scripts" . }}
 </body>
 </html>

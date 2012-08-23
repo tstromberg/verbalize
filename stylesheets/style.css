@@ -181,3 +181,8 @@ header .date {
   background-color: #FFF;
 }
 
+/* formatting textarea */
+#edit_content {
+  width: 800px;
+  height: 400px;
+}
