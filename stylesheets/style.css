@@ -8,7 +8,7 @@ h1 {
 
 body {
   font-family: 'Open Sans',  sans-serif;
-  background-color: #FDFDFD;
+  background-color: #FBFBFD;
   margin: 0;
   padding: 0;
 }
@@ -58,7 +58,12 @@ h2 {
 #content article {
   border-top: 1px solid #CCC;
   display: block;
+  line-height: 1.4em;
   padding: 3em;
+}
+
+#content p {
+  max-width: 53em;
 }
 
 header {
@@ -108,15 +113,19 @@ header .date {
 }
 
 .caption {
-  max-width: 100%;
+  display: inline-block;
   margin-bottom: .75em;
   background: white;
-  box-shadow: 0 1px 1px rgba(0, 0, 0, .1);
+  box-shadow: 0 2px 2px rgba(0, 0, 0, .2);
   padding: 12px;
   -moz-box-sizing: border-box;
   -webkit-box-sizing: border-box;
   -o-box-sizing: border-box;
   box-sizing: border-box;
+}
+
+.caption_text {
+  text-align: center;
 }
 
 #links {
@@ -171,5 +180,4 @@ header .date {
 #entries td {
   background-color: #FFF;
 }
-
 
