@@ -7,7 +7,7 @@ jQuery Slug is a powerful plugin that makes it easy to transform strings into sl
 */
 DEBUG = null;
 (function($) {
-    
+
     // Default map of accented and special characters to ASCII characters
     // credits: CakePHP
     var transliteration = {
@@ -63,46 +63,46 @@ DEBUG = null;
         'ƒ': 'f',
         "'": '',
     };
-    
+
     /**
     * Returns a string with all spaces converted to underscores (by default), accented
     * characters converted to non-accented characters, and non word characters removed.
     * credits: CakePHP
     */
     $.slug = function(string, replacement, map) {
-        
+
         if($.type(replacement) == 'undefined') {
             replacement = '-';
         } else if($.type(replacement) == 'object') {
             map = replacement;
             replacement = '-';
         }
-        
+
         transliteration['[^a-zA-Z0-9]'] = replacement;
-        
+
         if(!map) {
             map = {};
         }
-        
+
         map = $.extend({}, transliteration, map, {
             "\\s+": replacement
         });
-        
+
         var slug = string;
         $.each(map, function(index, value) {
             var re = new RegExp(index, "g");
             slug = slug.replace(re, value);
         });
-        
+
         // clean up trailing and repeated underscores
-        slug = slug.replace(/-$/, '').replace(/-{2,}/, '-');
-        return slug;
-        
+        slug = slug.replace(/-+/, '-').replace(/^-/, '').replace(/-$/, '');
+        return slug.toLowerCase();
+
     };
-    
-    
+
+
     $.fn.slug = function(options) {
-        
+
         var settings = $.extend({}, {
             'target': null,
             'event': 'keyup',
@@ -110,32 +110,32 @@ DEBUG = null;
             'map': null,
             'callback': null
         }, options);
-        
+
         if($.type(options) == 'function') {
             settings['callback'] = options;
         }
-        
+
         this.each(function() {
             var $this = $(this);
-            
+
             $this.bind(settings['event'] + ' jquery-slug-bind', function() {
                 var val = $this.val();
-                
+
                 slug = $.slug(val, settings['replacement'], settings['map']);
                 if(settings['target']) {
                     _setVal(settings['target'], slug);
                 }
-                
+
                 if(settings['callback']) {
                     settings['callback'].apply($this, [slug, val]);
                 }
             });
-            
+
             $this.trigger('jquery-slug-bind');
-            
+
         });
     }
-    
+
     var _setVal = function(target, value) {
         var $target = $(target);
         if($target.is(':input')) {
@@ -144,5 +144,5 @@ DEBUG = null;
             $target.text(value);
         }
     }
-    
+
 })(jQuery);

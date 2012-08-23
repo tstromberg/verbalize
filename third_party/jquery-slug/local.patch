@@ -1,5 +1,5 @@
 --- /home/tstromberg/src/jquery-slug/jquery.slug.js	2012-08-19 22:35:14.277385745 -0700
-+++ ./jquery.slug.js	2012-08-19 23:08:38.733297557 -0700
++++ jquery.slug.js	2012-08-22 22:32:42.849988534 -0700
 @@ -60,7 +60,8 @@
          'Ĳ': 'IJ',
          'ĳ': 'ij',
@@ -23,12 +23,14 @@
          }
          
          transliteration['[^a-zA-Z0-9]'] = replacement;
-@@ -93,6 +94,8 @@
+@@ -93,7 +94,9 @@
              slug = slug.replace(re, value);
          });
          
+-        return slug;
 +        // clean up trailing and repeated underscores
-+        slug = slug.replace(/-$/, '').replace(/-{2,}/, '-');
-         return slug;
++        slug = slug.replace(/^-+/, '').replace(/-+$/, '').replace(/-{2,}/, '-');
++        return slug.toLowerCase();
          
      };
+     
