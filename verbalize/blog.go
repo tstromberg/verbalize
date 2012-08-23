@@ -12,7 +12,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"third_party/go-gypsy/yaml"
+	"github.com/kylelemons/go-gypsy/yaml"
 	"time"
 )
 
