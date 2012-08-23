@@ -8,11 +8,11 @@
   {{ range .Entries }}
       <div>Title: <input type="text" name="title" value="{{.Title}}"/></div>
       <input type="hidden" name="slug" value="{{.Slug}}"/>
-      <div><textarea name="content" rows="40" cols="60" class="wymeditor">{{.Content}}</textarea></div>
+      <div><textarea name="content" rows="60" cols="60" class="wymeditor">{{.Content}}</textarea></div>
   {{ else }}
       <div>Title: <input type="text" id="title" name="title"/></div>
       <div>Slug: <input type="text" id="slug" name="slug"/></div>
-      <div><textarea name="content" rows="40" cols="60" class="wymeditor"></textarea></div>
+      <div><textarea name="content" rows="60" cols="60" class="wymeditor"></textarea></div>
 
       <script>
         $('#title').keyup(function() {
@@ -21,7 +21,7 @@
         });
       </script>
   {{ end }}
-      <div><input type="submit" value="Add Entry" class="wymupdate"></div>
+      <div><input type="submit" value="Save Post" class="wymupdate"></div>
   </form>
   
   
