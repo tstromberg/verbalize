@@ -16,11 +16,10 @@
 {{ define "content" }}
   {{ range .Entries }}
           <article>
-            <header>
+          <header>
             <h1><a href="{{$.BaseUrl}}{{.RelativeUrl}}">{{.Title}}</a>
                 <span class="chevron"><a class="comment_count" href="{{$.BaseUrl}}{{.RelativeUrl}}#disqus_thread"></a></span>
             </h1>
-              
               <div class="author">{{.Author}}</div>
               <div class="date">{{.Year}}-{{.Month}}-{{.Day}}</div>
 

@@ -6,13 +6,13 @@ import (
 	"appengine/user"
 	"bytes"
 	"fmt"
+	"github.com/kylelemons/go-gypsy/yaml"
 	"html/template"
 	"log"
 	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
-	"github.com/kylelemons/go-gypsy/yaml"
 	"time"
 )
 
@@ -24,7 +24,7 @@ const (
 
 type Entry struct {
 	Author      string
-	IsPublished bool
+	IsHidden    bool
 	PublishDate time.Time
 	Title       string
 	Content     []byte
@@ -40,7 +40,7 @@ func (e *Entry) Key(c appengine.Context) *datastore.Key {
 /* a mirror of Entry, with markings for raw HTML encoding. */
 type EntryContext struct {
 	Author         string
-	IsPublished    bool
+	IsHidden       bool
 	Timestamp      int64
 	Day            int
 	RfcDate        string
@@ -52,7 +52,7 @@ type EntryContext struct {
 	Title          string
 	Content        template.HTML
 	Excerpt        template.HTML
-	EscapedExcerpt []byte
+	EscapedExcerpt string
 	IsExcerpted    bool
 	RelativeUrl    string
 	Slug           string
@@ -65,9 +65,10 @@ func (e *Entry) Context() EntryContext {
 		[]byte("<!-- more tag -->"), 1)
 	excerpt := bytes.SplitN(e.Content, []byte(config.Require("more_tag")),
 		2)[0]
+
 	return EntryContext{
 		Author:         e.Author,
-		IsPublished:    e.IsPublished,
+		IsHidden:       e.IsHidden,
 		Timestamp:      e.PublishDate.UTC().Unix(),
 		Day:            e.PublishDate.Day(),
 		Hour:           e.PublishDate.Hour(),
@@ -79,7 +80,7 @@ func (e *Entry) Context() EntryContext {
 		Title:          e.Title,
 		Content:        template.HTML(content),
 		Excerpt:        template.HTML(excerpt),
-		EscapedExcerpt: excerpt,
+		EscapedExcerpt: string(excerpt),
 		IsExcerpted:    len(content) != len(excerpt),
 		RelativeUrl:    e.RelativeUrl,
 		Slug:           e.Slug,
@@ -104,10 +105,11 @@ type TemplateContext struct {
 
 /* Structure used for querying for blog entries */
 type EntryQuery struct {
-	Start time.Time
-	End   time.Time
-	Count int
-	Tag   string // unused
+	Start         time.Time
+	End           time.Time
+	Count         int
+	IncludeHidden bool
+	Tag           string // unused
 }
 
 type Link struct {
@@ -131,12 +133,12 @@ var (
 		"templates/error.html",
 	))
 	edit_tmpl = template.Must(template.ParseFiles(
-		"templates/base.html",
-		"templates/edit.html",
+		"templates/admin/base.html",
+		"templates/admin/edit.html",
 	))
 	admin_tmpl = template.Must(template.ParseFiles(
-		"templates/base.html",
-		"templates/admin.html",
+		"templates/admin/base.html",
+		"templates/admin/main.html",
 	))
 	feed_tmpl = template.Must(template.ParseFiles(
 		"templates/feed.html",
@@ -198,13 +200,18 @@ func GetEntries(c appengine.Context, params EntryQuery) (entries []Entry, err er
 		params.Count, _ = strconv.Atoi(config.Require("entries_per_page"))
 	}
 	q := datastore.NewQuery("Entries").Order("-PublishDate").Limit(params.Count)
-	if params.Start.IsZero() {
-		q.Filter("PublishDate >", params.End)
-	}
-	if params.End.IsZero() {
-		q.Filter("PublishDate <", params.End)
-	}
 
+	if params.Start.IsZero() == false {
+		q = q.Filter("PublishDate >", params.End)
+	}
+	if params.End.IsZero() == false {
+		q = q.Filter("PublishDate <", params.End)
+	}
+	if params.IncludeHidden == false {
+		log.Printf("Hiding hidden entries")
+		q = q.Filter("IsHidden = ", false)
+	}
+	log.Printf("Query: %v", q)
 	entries = make([]Entry, 0, params.Count)
 	_, err = q.GetAll(c, &entries)
 	return entries, err
@@ -261,7 +268,7 @@ func feed(w http.ResponseWriter, r *http.Request) {
 // HTTP handler for /admin
 func admin(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
-	entries, _ := GetEntries(c, EntryQuery{})
+	entries, _ := GetEntries(c, EntryQuery{IncludeHidden: true})
 	context, _ := GetTemplateContext(entries, "Admin", r)
 	err := admin_tmpl.Execute(w, context)
 	if err != nil {
@@ -273,14 +280,15 @@ func admin(w http.ResponseWriter, r *http.Request) {
 func edit(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 	entries := make([]Entry, 0)
+	entry := Entry{}
 	matches := edit_entry_re.FindStringSubmatch(r.URL.Path)
 	log.Printf("%s: %v", r.URL.Path, matches)
 	title := "New"
 	if len(matches) > 0 {
-		entry, _ := GetSingleEntry(c, matches[1])
-		entries = append(entries, entry)
-		title = entries[0].Title
+		entry, _ = GetSingleEntry(c, matches[1])
+		title = entry.Title
 	}
+	entries = append(entries, entry)
 	context, _ := GetTemplateContext(entries, title, r)
 	renderTemplate(w, *edit_tmpl, context)
 }
@@ -310,7 +318,10 @@ func submit(w http.ResponseWriter, r *http.Request) {
 	} else {
 		entry, _ = GetSingleEntry(c, slug)
 	}
-
+	log.Printf("%v", r.FormValue("hidden"))
+	if r.FormValue("hidden") == "1" {
+		entry.IsHidden = true
+	}
 	entry.Content = []byte(content)
 	entry.Title = title
 	entry.Slug = slug
@@ -328,5 +339,5 @@ func submit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Printf("Saved entry: %v", entry)
-	http.Redirect(w, r, "/", http.StatusFound)
+	http.Redirect(w, r, "/admin", http.StatusFound)
 }

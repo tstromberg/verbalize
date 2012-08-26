@@ -1,0 +1,35 @@
+{{ define "scripts" }}
+<script type="text/javascript">
+var disqus_shortname = '{{.DisqusId}}';
+(function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+}());
+</script>
+{{ end }}
+
+
+{{ define "content" }}
+    <div class="hero-unit">
+    <h1>Your Posts</h1>
+    <hr/>
+    {{ if .Entries }}
+      <table id="entries" class="table table-bordered table-striped">
+        <thead><tr><th>Title</th><th>Comments</th><th>Date</th><th>Hidden</th></tr></thead>
+      {{ range .Entries }}
+      <tr>
+        <td><a href="edit/{{.Slug}}">{{.Title}}</a></td>
+        <td><a class="comment_count" href="{{$.BaseUrl}}{{.RelativeUrl}}#disqus_thread"></a></td>
+        <td>{{.RfcDate}}</td>
+        <td>{{ if .IsHidden }}<i class="icon-eye-close"></i>{{ end }}</td>
+      </tr>
+      {{ end }}
+      </table>
+    {{ else }}
+    <p>No entries exist yet. Why not create one?</p>
+    {{ end }}
+    <a href="edit/" class="btn btn-primary btn-large">Create!</a>
+  </div>
+{{ end }}

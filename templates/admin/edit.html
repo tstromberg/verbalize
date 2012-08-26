@@ -1,0 +1,39 @@
+{{ define "stylesheets" }}
+{{ end }}
+
+
+{{ define "scripts" }}
+<script src="/third_party/ckeditor/ckeditor.js"></script>
+<script src="/third_party/jquery-slug/jquery.slug.js"></script>
+<script>
+  // update the #slug field automagically from the #title field
+  $('#title').keyup(function() {
+    slug = $.slug( $(this).val() );
+    $('#slug').val(slug);
+  });
+</script>
+{{ end }}
+
+{{ define "content" }}
+{{ range .Entries }}
+  <div class="hero-unit">
+    <form action="/submit" method="post">
+        <legend>Edit</legend>
+        <div style="margin-bottom: 8px;">
+          <input id="title" type="text" class="input-xlarge" name="title" value="{{.Title}}" placeholder="Title"/>
+          <input id="slug" type="text" class="input-medium" name="slug" value="{{.Slug}}" placeholder="URL Slug"/>
+          <label class="checkbox">
+            <input type="checkbox" value="1" name="hidden">
+            Hide this post
+          </label>
+        </div>
+        <textarea class="ckeditor" rows="30" name="content">{{.Content}}</textarea>
+        <div style="margin-top: 8px;">
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+    </form>
+  </div>
+  {{ end }}
+{{ end }}
+
+

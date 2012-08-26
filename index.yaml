@@ -12,6 +12,12 @@ indexes:
 
 - kind: Entries
   properties:
+  - name: IsHidden
+  - name: PublishDate
+    direction: desc
+
+- kind: Entries
+  properties:
   - name: IsPublished
   - name: PublishDate
     direction: desc
