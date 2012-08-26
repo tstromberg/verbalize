@@ -101,6 +101,9 @@ type TemplateContext struct {
 	Links           []Link
 	DisqusId        string
 	Hostname        template.HTML
+
+	// TODO(tstromberg): Split these into a separate admin page
+	IsNewPost bool
 }
 
 /* Structure used for querying for blog entries */
@@ -290,6 +293,11 @@ func edit(w http.ResponseWriter, r *http.Request) {
 	}
 	entries = append(entries, entry)
 	context, _ := GetTemplateContext(entries, title, r)
+	if len(matches) == 0 {
+		context.IsNewPost = true
+	} else {
+		context.IsNewPost = false
+	}
 	renderTemplate(w, *edit_tmpl, context)
 }
 
@@ -311,7 +319,7 @@ func submit(w http.ResponseWriter, r *http.Request) {
 
 	c := appengine.NewContext(r)
 
-	if len(slug) == 0 {
+	if r.FormValue("is_new_post") == "true" {
 		if u := user.Current(c); u != nil {
 			entry.Author = u.String()
 		}

@@ -20,7 +20,7 @@ CKEDITOR.editorConfig = function( config ) {
     ['Link','Unlink','Anchor', 'Image', 'HorizontalRule',],
     ['Find', 'Replace'],
   ];
-  config.height = 600;
+  config.height = 800;
 };
 
 
