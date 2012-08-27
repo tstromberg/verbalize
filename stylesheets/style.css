@@ -1,3 +1,4 @@
+
 body {
   font-family: 'Open Sans',  sans-serif;
 }
@@ -117,6 +118,11 @@ header .date {
 
 header .author {
   display: none;
+}
+
+
+.more:after {
+  content: " \00BB";
 }
 
 #sitelogo img {
