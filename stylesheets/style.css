@@ -31,14 +31,21 @@ h2 {
   font-weight: 300;
 }
 
+#wrapper {
+  position: relative;
+}
+
 #left {
-  float: left;
-  position: absolute;
-  max-width: 200px;
-  padding: 2em;
+  width: 200px;
+  position: fixed;
+  padding: 1.5em;
   height: 100%;
   border-right: 1px solid #CCC;
   background-color: #FFF;
+}
+
+#right {
+  margin-left: 230px;
 }
 
 #date {
@@ -47,12 +54,7 @@ h2 {
   text-transform: uppercase;
   color: #001;
   text-align: left;
-  margin-left: 250px;
   display: block;
-}
-
-#content {
-  margin-left: 265px;
 }
 
 #content article {
@@ -60,6 +62,7 @@ h2 {
   display: block;
   line-height: 1.4em;
   padding: 3em;
+  max-width: 55em;
 }
 
 #content p {
@@ -112,6 +115,10 @@ header .date {
   display: none;
 }
 
+header .author {
+  display: none;
+}
+
 #sitelogo img {
   width: 120px;
 }
@@ -160,13 +167,18 @@ header .date {
   color: #999
 }
 
-
-#powered {
+#footer {
+  position: fixed;
+  bottom: 1em;
+  /* TODO(tstromberg): Add real centering */
+  left: 5em;
   width: 100%;
-  position: absolute;
   font-size: small;
   font-weight: 300;
-  bottom: 1em;
+}
+
+#footer a {
+  text-decoration: underline;
 }
 
 #disqus_thread {

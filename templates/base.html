@@ -10,7 +10,7 @@
 <body>
   <div id="wrapper">
     <header id="left">
-    <div id="sitelogo"><a href="{{.BaseUrl}}"><img src="/images/sprocket.jpg"></a></div>
+    <div id="sitelogo"><a href="{{.BaseUrl}}"><img src="/images/sprocket.jpg" alt="Site Logo"></a></div>
       <h1>{{ .Title }}</h1>
       <h2>{{ .SubTitle }}</h2>
       <p id="site_description">{{ .Description }}</p>
@@ -22,20 +22,24 @@
         <li><a href="/feed">feed</a></li>
       </ul>
       </nav>
+      <div id="footer"><a href="https://github.com/tstromberg/verbalize">verbalize</a> {{.Version}}</footer>
     </header>
 
-    <section id="date">
-    <h3>
-      <script lang="javascript">
-        date = new Date({{.PageTimestamp}});
-        document.write(date.toLocaleDateString());
-      </script>
-    </h3>
-    </section>
+    <div id="right">
+      <section id="date">
+      <h3>
+        <script>
+          date = new Date({{.PageTimestamp}});
+          document.write(date.toLocaleDateString());
+        </script>
+      </h3>
+      </section>
 
-    <div id="content">
-      {{ template "content" . }}
-    </div>
+      <div id="content">
+        {{ template "content" . }}
+      </div>
+
+      </div>
   </div>
   {{ template "scripts" . }}
 </body>
