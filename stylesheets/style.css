@@ -61,9 +61,11 @@ h2 {
 #content article {
   border-top: 1px solid #CCC;
   display: block;
-  line-height: 1.4em;
+  line-height: 1.8em;
   padding: 3em;
-  max-width: 55em;
+  max-width: 44em;
+  font-size: 120%;
+
 }
 
 #content p {
