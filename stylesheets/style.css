@@ -188,8 +188,6 @@ header .author {
 }
 
 #disqus_thread {
-  width: 40em;
-  margin-left: 3em;
   padding: 3em;
   background-color: #FFF;
   border: 1px solid #F5F5F5;

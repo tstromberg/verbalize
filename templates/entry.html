@@ -1,16 +1,4 @@
-{{ define "content" }}
-  {{ range .Entries }}
-          <article>
-            <header>
-            <h1><a href="{{$.BaseUrl}}{{.RelativeUrl}}">{{.Title}}</a></h1>
-              <div class="author">{{.Author}}</div>
-              <div class="date">{{.Year}}-{{.Month}}-{{.Day}}</div>
-            </header>
-            <p>{{.Content}}</p>
-          </article>
-
-          <div id="disqus_thread"></div>
-  {{ end }}
+{{ define "scripts" }}
   <script type="text/javascript">
     var disqus_shortname = '{{.DisqusId}}';
     (function() {
@@ -21,6 +9,25 @@
         (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
     })();
   </script>
+{{ end }}
+
+{{ define "content" }}
+  {{ range .Entries }}
+          <article>
+            <header>
+            <h1><a href="{{$.BaseUrl}}{{.RelativeUrl}}">{{.Title}}</a></h1>
+              <div class="author">{{.Author}}</div>
+              <div class="date">{{.Year}}-{{.Month}}-{{.Day}}</div>
+            </header>
+            <p>{{.Content}}</p>
+            <section id="comments">
+              <div id="disqus_thread"></div>
+            </section>
+          </article>
+
+
+  {{ end }}
+
   <noscript>Please enable JavaScript to comments</noscript>
 {{ end }}
 
