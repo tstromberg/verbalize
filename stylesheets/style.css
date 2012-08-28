@@ -1,17 +1,8 @@
-
 body {
-  font-family: 'Open Sans',  sans-serif;
-}
-
-h1 {
-  font-weight: 800;
-}
-
-body {
-  font-family: 'Open Sans',  sans-serif;
-  background-color: #FBFBFD;
   margin: 0;
   padding: 0;
+  font-family: 'Open Sans', sans-serif;
+  background-color: #FFF:
 }
 
 h1 {
@@ -33,6 +24,8 @@ h2 {
 }
 
 #wrapper {
+  margin: 0;
+  padding: 0;
   position: relative;
 }
 
@@ -42,7 +35,7 @@ h2 {
   padding: 1.5em;
   height: 100%;
   border-right: 1px solid #CCC;
-  background-color: #FFF;
+  background-color: #FBFBFD;
 }
 
 #right {
@@ -58,18 +51,22 @@ h2 {
   display: block;
 }
 
+#content h1 {
+  font-size: 250%;
+}
+
 #content article {
   border-top: 1px solid #CCC;
   display: block;
-  line-height: 1.8em;
+  line-height: 1.6em;
   padding: 3em;
-  max-width: 44em;
-  font-size: 120%;
-
+  color: #333;
+  font-size: 16px;
 }
 
 #content p {
-  max-width: 53em;
+  font-family: Arial, Verdana, sans-serif;
+  max-width: 45em;
 }
 
 header {
@@ -135,16 +132,19 @@ header .author {
   display: inline-block;
   margin-bottom: .75em;
   background: white;
+  border: 1px solid #F5F5F5;
   box-shadow: 0 2px 2px rgba(0, 0, 0, .2);
-  padding: 12px;
+  padding: 2px;
   -moz-box-sizing: border-box;
   -webkit-box-sizing: border-box;
   -o-box-sizing: border-box;
   box-sizing: border-box;
 }
-
-.caption_text {
-  text-align: center;
+.caption p {
+  margin: 0;
+  padding: 0;
+  text-align: right;
+  width: 100%;
 }
 
 #links {
@@ -190,9 +190,11 @@ header .author {
 }
 
 #disqus_thread {
-  padding: 3em;
-  background-color: #FFF;
-  border: 1px solid #F5F5F5;
+  padding: 1em;
+  margin-top: 3em;
+  background-color: #FEFFFD;
+  border: 1px solid #77e700;
+  max-width: 800px;
 }
 
 #admin {
