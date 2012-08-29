@@ -262,8 +262,8 @@ header .author {
      float: left;
   }
   #sitelogo img {
-     height: 50px;
      width: 50px;
+     height: auto;
      padding: 20px;
   }
   #right {
@@ -299,7 +299,7 @@ header .author {
   }
   .caption img {
     width: 100%;
-    height: 100%;
+    height: auto;
   }
 }
 
