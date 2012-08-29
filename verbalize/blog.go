@@ -19,7 +19,7 @@ import (
 const (
 	// Internal constants
 	CONFIG_PATH = "verbalize.yml"
-	VERSION     = "zero.0826"
+	VERSION     = "zero.0828"
 )
 
 type Entry struct {
