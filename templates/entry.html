@@ -18,8 +18,10 @@
             <h1><a href="{{$.BaseUrl}}{{.RelativeUrl}}">{{.Title}}</a></h1>
               <div class="author">{{.Author}}</div>
               <div class="date">{{.Year}}-{{.Month}}-{{.Day}}</div>
-            </header>
-            <p>{{.Content}}</p>
+              </header>
+            <section class="post">
+              {{.Content}}
+            </section>
             <section id="comments">
               <div id="disqus_thread"></div>
             </section>

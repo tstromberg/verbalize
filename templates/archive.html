@@ -15,16 +15,20 @@
           <article>
           <header>
             <h1><a href="{{$.BaseUrl}}{{.RelativeUrl}}">{{.Title}}</a>
-                <span class="chevron"><a class="comment_count" href="{{$.BaseUrl}}{{.RelativeUrl}}#disqus_thread"></a></span>
             </h1>
+              <div class="comment_info">
+                <a class="comment_count" href="{{$.BaseUrl}}{{.RelativeUrl}}#disqus_thread"></a></span>
+              </div>
               <div class="author">{{.Author}}</div>
               <div class="date">{{.Year}}-{{.Month}}-{{.Day}}</div>
 
             </header>
-            <p>{{.Excerpt }}</p>
-            {{ if .IsExcerpted }}
-            <div class="more"><a href="{{$.BaseUrl}}{{.RelativeUrl}}">Read on...</a></div>
-            {{ end }}
+            <section class="post">
+              {{.Excerpt }}
+              {{ if .IsExcerpted }}
+                <div class="more"><a href="{{$.BaseUrl}}{{.RelativeUrl}}">Read on...</a></div>
+              {{ end }}
+            </section>
           </article>
   {{ end }}
 {{ end }}

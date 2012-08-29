@@ -64,9 +64,19 @@ h2 {
   font-size: 16px;
 }
 
-#content p {
+#content .post {
+  display: block;
   font-family: Arial, Verdana, sans-serif;
-  max-width: 45em;
+  max-width: 870px;
+  margin-left: 4px;
+  border-left: 4px dotted #fafafa;
+  border-right: 4px dotted #fafafa;
+}
+
+.post p {
+  margin-left: auto;
+  width: 48em;
+  margin-right: auto;
 }
 
 header {
@@ -83,7 +93,11 @@ header {
 }
 
 #content a {
-  color: #002;
+  color: #468c08;
+}
+
+#content h1 a {
+  color: #000;
 }
 
 #id a {
@@ -95,20 +109,25 @@ header a {
   text-decoration: none;
 }
 
-#content .comment_count {
-  font-weight: 300;
-  padding-left: 0.25em;
-  color: #FDFDFD;
+.comment_info {
+}
+
+#content a.comment_count {
+  display: block;
+  float: right;
+  position: relative;
+  width: 10em;
+  font-size: small;
+  color: #FFF;
+}
+
+#content .comment_count:after {
+  content: " \2234";
+  color: #D5D5D5;
 }
 
 #content .comment_count:hover {
-  color: #D0D0D0;
-}
-
-#content .comment_count:before {
-  font-weight: 800;
-  content: "> ";
-  color: #F0F0F0;
+  color: #999;
 }
 
 header .date {
@@ -119,9 +138,14 @@ header .author {
   display: none;
 }
 
+.more {
+  padding-top: 1em;
+}
 
 .more:after {
   content: " \00BB";
+  font-style: italic;
+  color: #999;
 }
 
 #sitelogo img {
@@ -129,27 +153,29 @@ header .author {
 }
 
 .caption {
+  margin-left: 2em;
   display: inline-block;
-  margin-bottom: .75em;
-  background: white;
-  border: 1px solid #F5F5F5;
-  box-shadow: 0 2px 2px rgba(0, 0, 0, .2);
+  margin-bottom: .5em;
+  background: #010;
+  box-shadow: 0 4px 4px rgba(0, 0, 0, .5);
   padding: 2px;
   -moz-box-sizing: border-box;
   -webkit-box-sizing: border-box;
   -o-box-sizing: border-box;
   box-sizing: border-box;
 }
+
 #content .caption p {
   margin: 0;
   padding: 0;
-  color: #666;
+  border: 0;
+  color: #999;
   font-size: small;
-  font-style: italic;
   text-align: right;
   width: 99%;
   max-width: 100%;
   margin-right: 1em;
+  font-family:  "Courier New", Courier, monospace;
 }
 
 #links {
@@ -196,10 +222,17 @@ header .author {
 
 #disqus_thread {
   padding: 1em;
-  margin-top: 3em;
-  background-color: #FEFFFD;
-  border: 1px solid #77e700;
-  max-width: 800px;
+  margin-left: 5px;
+  margin-right: 3px;
+  margin-top: 2em;
+  background-color: #FFFFFD;
+  border: 1px solid #999;
+  max-width: 870px;
+  box-shadow: 0 4px 4px rgba(0, 0, 0, .3);
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  -o-box-sizing: border-box;
+  box-sizing: border-box;
 }
 
 #admin {
