@@ -1,17 +1,21 @@
-title: sprocket i/o
-subtitle: Thomas Stromberg
-description: Shallow thoughts from a systems engineer.
+title: Blog Title
+subtitle: Subtitle
+description: This is my description.
 
-author: Thomas Stromberg
-author_email: t+verbalize@stromberg.org
+author: John Doe
+author_email: john.doe@example.com
 
 # For comments, you must register at http://disqus.com/
-disqus_id: tstromberg-blog
+disqus_id: example.com
+
+# For analytics, you must register at https://support.google.com/analytics/answer/1008080?hl=en
+google_analytics_id:
+google_analytics_domain: example.com
 
 # Where is this application serving from?
 subdirectory: /
 
-entries_per_page: 5
+entries_per_page: 4
 
 # Note: <!--more--> is what wordpress uses. wymeditor removes comments,
 more_tag: <!--more-->

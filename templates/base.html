@@ -9,12 +9,14 @@
 <body>
   <div id="wrapper">
     <header id="left">
-    <div id="sitelogo"><a href="{{.BaseUrl}}"><img src="/images/sprocket.jpg" alt="Site Logo"></a></div>
+    <div id="sitelogo"><a href="{{.BaseUrl}}"><img src="/images/alc.png" alt="Site Logo"></a></div>
       <h1>{{ .Title }}</h1>
       <h2>{{ .SubTitle }}</h2>
       <p id="site_description">{{ .Description }}</p>
       <nav id="links">
       <ul>
+        <li><a href="http://www.aidslifecycle.org/">AIDS/LifeCycle</a></li>
+        <li><a href="http://www.tofighthiv.org/site/TR/AIDSLIFECYCLE2014/AIDSLifeCycleCenter?px=2956163&pg=personal&fr_id=1630">My ALC Profile</a></li>
         {{ range .Links }}
         <li><a href="{{.Url}}">{{.Title}}</a></li>
         {{ end }}

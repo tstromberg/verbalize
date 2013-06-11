@@ -87,18 +87,20 @@ func (e *Entry) Context() EntryContext {
 
 /* This is sent to all templates */
 type TemplateContext struct {
-	Title           string
-	SubTitle        string
-	BaseUrl         template.HTML
-	PageTitle       string
-	Description     string
-	Version         string
-	PageTimeRfc3339 string
-	PageTimestamp   int64
-	Entries         []EntryContext
-	Links           []Link
-	DisqusId        string
-	Hostname        template.HTML
+	Title                 string
+	SubTitle              string
+	BaseUrl               template.HTML
+	PageTitle             string
+	Description           string
+	Version               string
+	PageTimeRfc3339       string
+	PageTimestamp         int64
+	Entries               []EntryContext
+	Links                 []Link
+	DisqusId              string
+	GoogleAnalyticsId     string
+	GoogleAnalyticsDomain string
+	Hostname              template.HTML
 
 	// TODO(tstromberg): Split these into a separate admin page
 	IsNewPost bool
@@ -181,17 +183,24 @@ func GetTemplateContext(entries []Entry, title string, r *http.Request) (t Templ
 	}
 	base_url := scheme + "://" + r.Host + config.Require("subdirectory")
 
+	/* These variables are optional. */
+	disqus_id, _ := config.Get("disqus_id")
+	google_analytics_id, _ := config.Get("google_analytics_id")
+	google_analytics_domain, _ := config.Get("google_analytics_domain")
+
 	t = TemplateContext{
-		BaseUrl:         template.HTML(base_url),
-		Title:           config.Require("title"),
-		SubTitle:        config.Require("subtitle"),
-		Description:     config.Require("description"),
-		Version:         VERSION,
-		PageTimeRfc3339: time.Now().Format(time.RFC3339),
-		PageTimestamp:   time.Now().Unix() * 1000,
-		Entries:         entry_contexts,
-		PageTitle:       title,
-		DisqusId:        config.Require("disqus_id"),
+		BaseUrl:               template.HTML(base_url),
+		Title:                 config.Require("title"),
+		SubTitle:              config.Require("subtitle"),
+		Description:           config.Require("description"),
+		Version:               VERSION,
+		PageTimeRfc3339:       time.Now().Format(time.RFC3339),
+		PageTimestamp:         time.Now().Unix() * 1000,
+		Entries:               entry_contexts,
+		PageTitle:             title,
+		DisqusId:              disqus_id,
+		GoogleAnalyticsId:     google_analytics_id,
+		GoogleAnalyticsDomain: google_analytics_domain,
 	}
 	return t, err
 }
