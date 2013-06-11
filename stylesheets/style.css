@@ -75,6 +75,10 @@ h2 {
   border-right: 4px dotted #fafafa;
 }
 
+.post ul {
+  margin-left: 3em;
+}
+
 .post p {
   margin-left: auto;
   width: 48em;
