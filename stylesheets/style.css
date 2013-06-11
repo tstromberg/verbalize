@@ -152,6 +152,10 @@ header .author {
 
 #sitelogo img {
   width: 120px;
+  border: 1px solid #DBDBDD;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .caption {
@@ -192,12 +196,13 @@ header .author {
 
 #links li {
   list-style: none;
-  display: inline;
+  display: inline-block;
   border: 4px solid #F5F5F5;
   padding: 4px;
   padding-left: 1em;
   padding-right: 1em;
   font-weight: 600;
+  margin-bottom: 8px;
   border-radius: 20px;
   -moz-border-radius: 20px;
   -webkit-border-radius: 20px;
