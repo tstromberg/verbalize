@@ -4,7 +4,9 @@ Features
 - [x] Runs on Google AppEngine
 - [x] WYSWIG editing of blog posts
 - [x] Disqus integration
-- [ ] Ability to create arbitrary pages/links
+- [x] Ability to create arbitrary links
+- [x] Support for themes
+- [ ] Ability to create arbitrary pages
 - [ ] Page caching to avoid Datastore hits
 
 
