@@ -10,6 +10,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -95,16 +96,20 @@ func (e *Entry) Context() EntryContext {
 
 /* This is sent to all templates */
 type TemplateContext struct {
-	Title                 string
-	SubTitle              string
-	BaseUrl               template.HTML
-	PageTitle             string
-	Description           string
-	Version               string
-	PageTimeRfc3339       string
-	PageTimestamp         int64
-	Entries               []EntryContext
-	Links                 []Link
+	SiteTitle       string
+	SiteSubTitle    string
+	SiteDescription string
+	BaseUrl         template.HTML
+
+	Version string
+
+	PageTitle       string
+	PageId          string
+	PageTimeRfc3339 string
+	PageTimestamp   int64
+	Entries         []EntryContext
+	Links           []Link
+
 	DisqusId              string
 	GoogleAnalyticsId     string
 	GoogleAnalyticsDomain string
@@ -123,32 +128,32 @@ type EntryQuery struct {
 	Tag           string // unused
 }
 
-var (
-	config = yaml.ConfigFile(CONFIG_PATH)
+// load and configure set of templates
+func loadTemplate(paths ...string) *template.Template {
+	t := template.New(strings.Join(paths, ","))
+	t.Funcs(template.FuncMap{
+		"eq": reflect.DeepEqual,
+	})
+	_, err := t.ParseFiles(paths...)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
 
-	archive_tmpl = template.Must(template.ParseFiles(
-		"templates/base.html",
-		"templates/archive.html",
-	))
-	entry_tmpl = template.Must(template.ParseFiles(
-		"templates/base.html",
-		"templates/entry.html",
-	))
-	error_tmpl = template.Must(template.ParseFiles(
-		"templates/base.html",
-		"templates/error.html",
-	))
-	edit_tmpl = template.Must(template.ParseFiles(
-		"templates/admin/base.html",
-		"templates/admin/edit.html",
-	))
-	admin_tmpl = template.Must(template.ParseFiles(
-		"templates/admin/base.html",
-		"templates/admin/main.html",
-	))
-	feed_tmpl = template.Must(template.ParseFiles(
-		"templates/feed.html",
-	))
+var (
+	config     = yaml.ConfigFile(CONFIG_PATH)
+	archiveTpl = loadTemplate("templates/base.html", "templates/archive.html")
+	entryTpl   = loadTemplate("templates/base.html", "templates/entry.html")
+	errorTpl   = loadTemplate("templates/base.html", "templates/error.html")
+
+	feedTpl = loadTemplate("templates/feed.html")
+
+	adminEditTpl     = loadTemplate("templates/admin/base.html", "templates/admin/edit.html")
+	adminHomeTpl     = loadTemplate("templates/admin/base.html", "templates/admin/home.html")
+	adminLinksTpl    = loadTemplate("templates/admin/base.html", "templates/admin/links.html")
+	adminCommentsTpl = loadTemplate("templates/admin/base.html", "templates/admin/comments.html")
+
 	// regexp matching an entry URL
 	view_entry_re = regexp.MustCompile(`\d{4}/\d{2}/(?P<slug>[\w-]+)$`)
 	edit_entry_re = regexp.MustCompile(`edit/(?P<slug>[\w-]+)$`)
@@ -158,15 +163,45 @@ var (
 func init() {
 	/* ServeMux does not understand regular expressions :( */
 	http.HandleFunc("/", rootHandler)
-	http.HandleFunc("/admin/", adminHandler)
-	http.HandleFunc("/admin/edit/", editHandler)
-	http.HandleFunc("/admin/submit", submitHandler)
-	http.HandleFunc("/admin/update_links", updateLinksHandler)
 	http.HandleFunc("/feed/", feedHandler)
+
+	http.HandleFunc("/admin/", adminHomeHandler)
+	http.HandleFunc("/admin/edit/", adminEditEntryHandler)
+	http.HandleFunc("/admin/submit_entry", adminSubmitEntryHandler)
+	http.HandleFunc("/admin/links", adminLinksHandler)
+	http.HandleFunc("/admin/submit_links", adminSubmitLinksHandler)
+	http.HandleFunc("/admin/comments", adminCommentsHandler)
+
+}
+
+// equality function for templates. Courtesy of Russ Cox
+// https://groups.google.com/forum/#!topic/golang-nuts/OEdSDgEC7js
+func equals(args ...interface{}) bool {
+	if len(args) == 0 {
+		return false
+	}
+	x := args[0]
+	switch x := x.(type) {
+	case string, int, int64, byte, float32, float64:
+		for _, y := range args[1:] {
+			if x == y {
+				return true
+			}
+		}
+		return false
+	}
+
+	for _, y := range args[1:] {
+		if reflect.DeepEqual(x, y) {
+			return true
+		}
+	}
+	return false
 }
 
 // Render a named template name to the HTTP channel
 func renderTemplate(w http.ResponseWriter, tmpl template.Template, context interface{}) {
+
 	err := tmpl.ExecuteTemplate(w, "base.html", context)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
@@ -174,7 +209,8 @@ func renderTemplate(w http.ResponseWriter, tmpl template.Template, context inter
 	}
 }
 
-func GetTemplateContext(entries []Entry, title string, r *http.Request) (t TemplateContext, err error) {
+func GetTemplateContext(entries []Entry, pageTitle string, pageId string, r *http.Request) (
+	t TemplateContext, err error) {
 	entry_contexts := make([]EntryContext, 0, len(entries))
 	for _, entry := range entries {
 		entry_contexts = append(entry_contexts, entry.Context())
@@ -194,14 +230,15 @@ func GetTemplateContext(entries []Entry, title string, r *http.Request) (t Templ
 
 	t = TemplateContext{
 		BaseUrl:               template.HTML(base_url),
-		Title:                 config.Require("title"),
-		SubTitle:              config.Require("subtitle"),
-		Description:           config.Require("description"),
+		SiteTitle:             config.Require("title"),
+		SiteSubTitle:          config.Require("subtitle"),
+		SiteDescription:       config.Require("description"),
 		Version:               VERSION,
 		PageTimeRfc3339:       time.Now().Format(time.RFC3339),
 		PageTimestamp:         time.Now().Unix() * 1000,
 		Entries:               entry_contexts,
-		PageTitle:             title,
+		PageTitle:             pageTitle,
+		PageId:                pageId,
 		DisqusId:              disqus_id,
 		GoogleAnalyticsId:     google_analytics_id,
 		GoogleAnalyticsDomain: google_analytics_domain,
@@ -240,14 +277,14 @@ func GetSingleEntry(c appengine.Context, slug string) (e Entry, err error) {
 // HTTP handler for rendering blog entries
 func rootHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("%s", r.URL.Path)
-	template := *error_tmpl
+	template := *errorTpl
 	title := "Error"
 	entries := make([]Entry, 0)
 	c := appengine.NewContext(r)
 
 	if r.URL.Path == "/" {
 		title = "Archive"
-		template = *archive_tmpl
+		template = *archiveTpl
 		entries, _ = GetEntries(c, EntryQuery{})
 	}
 
@@ -255,14 +292,14 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 	if len(matches) > 0 {
 		entry, _ := GetSingleEntry(c, matches[1])
 		entries = append(entries, entry)
-		template = *entry_tmpl
+		template = *entryTpl
 		title = entries[0].Title
 	}
 
 	if len(entries) == 0 {
 		http.Error(w, "Nothing to see here.", http.StatusNotFound)
 	} else {
-		context, _ := GetTemplateContext(entries, title, r)
+		context, _ := GetTemplateContext(entries, title, "root", r)
 		renderTemplate(w, template, context)
 	}
 }
@@ -272,26 +309,23 @@ func feedHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("%v", r.URL)
 	c := appengine.NewContext(r)
 	entries, _ := GetEntries(c, EntryQuery{})
-	context, _ := GetTemplateContext(entries, "feed", r)
-	err := feed_tmpl.Execute(w, context)
+	context, _ := GetTemplateContext(entries, "Atom Feed", "feed", r)
+	err := feedTpl.Execute(w, context)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
 // HTTP handler for /admin
-func adminHandler(w http.ResponseWriter, r *http.Request) {
+func adminHomeHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 	entries, _ := GetEntries(c, EntryQuery{IncludeHidden: true})
-	context, _ := GetTemplateContext(entries, "Admin", r)
-	err := admin_tmpl.Execute(w, context)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+	context, _ := GetTemplateContext(entries, "Home", "admin_home", r)
+	renderTemplate(w, *adminHomeTpl, context)
 }
 
 // HTTP handler for /edit
-func editHandler(w http.ResponseWriter, r *http.Request) {
+func adminEditEntryHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 	entries := make([]Entry, 0)
 	entry := Entry{}
@@ -303,17 +337,17 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 		title = entry.Title
 	}
 	entries = append(entries, entry)
-	context, _ := GetTemplateContext(entries, title, r)
+	context, _ := GetTemplateContext(entries, title, "admin_edit", r)
 	if len(matches) == 0 {
 		context.IsNewPost = true
 	} else {
 		context.IsNewPost = false
 	}
-	renderTemplate(w, *edit_tmpl, context)
+	renderTemplate(w, *adminEditTpl, context)
 }
 
 // HTTP handler for /admin/submit - submits a blog entry into datastore
-func submitHandler(w http.ResponseWriter, r *http.Request) {
+func adminSubmitEntryHandler(w http.ResponseWriter, r *http.Request) {
 	content := strings.TrimSpace(r.FormValue("content"))
 	title := strings.TrimSpace(r.FormValue("title"))
 	slug := strings.TrimSpace(r.FormValue("slug"))
@@ -361,6 +395,17 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/admin", http.StatusFound)
 }
 
-// updateLinksHandler handles /admin/update_links
-func updateLinksHandler(w http.ResponseWriter, r *http.Request) {
+func adminLinksHandler(w http.ResponseWriter, r *http.Request) {
+	entries := make([]Entry, 0)
+	context, _ := GetTemplateContext(entries, "Links", "admin_links", r)
+	renderTemplate(w, *adminLinksTpl, context)
+}
+
+func adminSubmitLinksHandler(w http.ResponseWriter, r *http.Request) {
+}
+
+func adminCommentsHandler(w http.ResponseWriter, r *http.Request) {
+	entries := make([]Entry, 0)
+	context, _ := GetTemplateContext(entries, "Comments", "admin_comments", r)
+	renderTemplate(w, *adminCommentsTpl, context)
 }

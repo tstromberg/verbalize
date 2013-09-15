@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Verbalize: {{ .Title }}</title>
+  <title>Verbalize: {{ .SiteTitle }}</title>
   <meta charset="UTF-8">
   <link rel="stylesheet" href="/third_party/bootstrap/css/bootstrap.min.css">
   <link rel="stylesheet" href="/">
@@ -19,10 +19,10 @@
           </div>
           <div class="collapse navbar-collapse">
             <ul class="nav navbar-nav">
-              <li class="active"><a href="/admin/">Home</a></li>
-              <li><a href="/admin/edit">Create</a></li>
-              <li><a href="/admin/links">Links</a></li>
-              <li><a href="/admin/comments">Comments</a></li>
+              <li {{if eq .PageId "admin_home"}}class="active"{{ end }}><a href="/admin/">Home</a></li>
+              <li {{if eq .PageId "admin_edit"}}class="active"{{ end }}><a href="/admin/edit">Create</a></li>
+              <li {{if eq .PageId "admin_links"}}class="active"{{ end }}><a href="/admin/links">Links</a></li>
+              <li {{if eq .PageId "admin_comments"}}class="active"{{ end }}><a href="/admin/comments">Comments</a></li>
             </ul>
         </div><!-- /.nav-collapse -->
      </div><!-- /.container -->
