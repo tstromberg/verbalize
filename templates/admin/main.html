@@ -12,24 +12,28 @@ var disqus_shortname = '{{.DisqusId}}';
 
 
 {{ define "content" }}
-    <div class="hero-unit">
-    <h1>Your Posts</h1>
-    <hr/>
+<div class="container">
+    <h1>Recent Entries</h1>
+
     {{ if .Entries }}
       <table id="entries" class="table table-bordered table-striped">
-        <thead><tr><th>Title</th><th>Comments</th><th>Date</th><th>Hidden</th></tr></thead>
+        <thead><tr><th>Title</th><th>Edit</th><th>Comments</th><th>Date</th></tr></thead>
       {{ range .Entries }}
       <tr>
-        <td><a href="edit/{{.Slug}}">{{.Title}}</a></td>
+        <td>
+          <a href="{{$.BaseUrl}}{{.RelativeUrl}}">{{.Title}}</a>
+          {{ if .IsHidden }}<span class="glyphicon glyphicon-eye-close"></span>{{ end }}
+        </td>
+        <td><a href="edit/{{.Slug}}"><span class="glyphicon glyphicon-pencil"></span></a></td>
         <td><a class="comment_count" href="{{$.BaseUrl}}{{.RelativeUrl}}#disqus_thread"></a></td>
         <td>{{.RfcDate}}</td>
-        <td>{{ if .IsHidden }}<i class="icon-eye-close"></i>{{ end }}</td>
       </tr>
       {{ end }}
       </table>
     {{ else }}
     <p>No entries exist yet. Why not create one?</p>
     {{ end }}
-    <a href="edit/" class="btn btn-primary btn-large">Create!</a>
-  </div>
+    <a href="edit" class="btn btn-primary btn-large">Create!</a>
+</div>
+
 {{ end }}

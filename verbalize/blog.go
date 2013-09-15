@@ -22,6 +22,7 @@ const (
 	VERSION     = "zero.20130611"
 )
 
+// Entry struct, stored in Datastore.
 type Entry struct {
 	Author      string
 	IsHidden    bool
@@ -30,6 +31,13 @@ type Entry struct {
 	Content     []byte
 	Slug        string
 	RelativeUrl string
+}
+
+// Link struct, stored in Datastore.
+type Link struct {
+	Title string
+	Url   string
+	Order int64
 }
 
 /* return a fetching key for a given entry */
@@ -115,11 +123,6 @@ type EntryQuery struct {
 	Tag           string // unused
 }
 
-type Link struct {
-	Title string
-	Url   string
-}
-
 var (
 	config = yaml.ConfigFile(CONFIG_PATH)
 
@@ -154,11 +157,12 @@ var (
 // Setup the URL handlers at initialization
 func init() {
 	/* ServeMux does not understand regular expressions :( */
-	http.HandleFunc("/", root)
-	http.HandleFunc("/admin/edit/", edit)
-	http.HandleFunc("/admin/", admin)
-	http.HandleFunc("/submit", submit)
-	http.HandleFunc("/feed/", feed)
+	http.HandleFunc("/", rootHandler)
+	http.HandleFunc("/admin/", adminHandler)
+	http.HandleFunc("/admin/edit/", editHandler)
+	http.HandleFunc("/admin/submit", submitHandler)
+	http.HandleFunc("/admin/update_links", updateLinksHandler)
+	http.HandleFunc("/feed/", feedHandler)
 }
 
 // Render a named template name to the HTTP channel
@@ -234,7 +238,7 @@ func GetSingleEntry(c appengine.Context, slug string) (e Entry, err error) {
 }
 
 // HTTP handler for rendering blog entries
-func root(w http.ResponseWriter, r *http.Request) {
+func rootHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("%s", r.URL.Path)
 	template := *error_tmpl
 	title := "Error"
@@ -264,7 +268,7 @@ func root(w http.ResponseWriter, r *http.Request) {
 }
 
 // HTTP handler for /feed
-func feed(w http.ResponseWriter, r *http.Request) {
+func feedHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("%v", r.URL)
 	c := appengine.NewContext(r)
 	entries, _ := GetEntries(c, EntryQuery{})
@@ -276,7 +280,7 @@ func feed(w http.ResponseWriter, r *http.Request) {
 }
 
 // HTTP handler for /admin
-func admin(w http.ResponseWriter, r *http.Request) {
+func adminHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 	entries, _ := GetEntries(c, EntryQuery{IncludeHidden: true})
 	context, _ := GetTemplateContext(entries, "Admin", r)
@@ -287,7 +291,7 @@ func admin(w http.ResponseWriter, r *http.Request) {
 }
 
 // HTTP handler for /edit
-func edit(w http.ResponseWriter, r *http.Request) {
+func editHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 	entries := make([]Entry, 0)
 	entry := Entry{}
@@ -308,8 +312,8 @@ func edit(w http.ResponseWriter, r *http.Request) {
 	renderTemplate(w, *edit_tmpl, context)
 }
 
-// HTTP handler for /submit - submits a blog entry into datastore
-func submit(w http.ResponseWriter, r *http.Request) {
+// HTTP handler for /admin/submit - submits a blog entry into datastore
+func submitHandler(w http.ResponseWriter, r *http.Request) {
 	content := strings.TrimSpace(r.FormValue("content"))
 	title := strings.TrimSpace(r.FormValue("title"))
 	slug := strings.TrimSpace(r.FormValue("slug"))
@@ -355,4 +359,8 @@ func submit(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Printf("Saved entry: %v", entry)
 	http.Redirect(w, r, "/admin", http.StatusFound)
+}
+
+// updateLinksHandler handles /admin/update_links
+func updateLinksHandler(w http.ResponseWriter, r *http.Request) {
 }

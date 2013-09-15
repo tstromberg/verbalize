@@ -17,5 +17,7 @@ subdirectory: /
 
 entries_per_page: 4
 
+theme: sf2sd
+
 # Note: <!--more--> is what wordpress uses. wymeditor removes comments,
 more_tag: <!--more-->
