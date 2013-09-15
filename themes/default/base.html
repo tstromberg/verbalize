@@ -4,12 +4,12 @@
   <title>{{ .PageTitle }} - {{ .SiteTitle }}</title>
   <meta charset="UTF-8">
   <link href='http://fonts.googleapis.com/css?family=Playfair+Display|Open+Sans:300italic,400,300,600,700,800|Merriweather:400,900,700,300' rel='stylesheet' type='text/css'>
-  <link rel="stylesheet" href="/stylesheets/style.css">
+  <link rel="stylesheet" href="/themes/{{.SiteTheme}}/style.css">
 </head>
 <body>
   <div id="wrapper">
     <header id="left">
-    <div id="sitelogo"><a href="{{.BaseUrl}}"><img src="/images/sprocket.jpg" alt="Site Logo"></a></div>
+    <div id="sitelogo"><a href="{{.BaseUrl}}"><img src="/themes/{{.SiteTheme}}/sprocket.jpg" alt="Site Logo"></a></div>
       <h1>{{ .SiteTitle }}</h1>
       <h2>{{ .SiteSubTitle }}</h2>
       <p id="site_description">{{ .SiteDescription }}</p>

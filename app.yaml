@@ -7,11 +7,8 @@ handlers:
 - url: /third_party
   static_dir: third_party
 
-- url: /stylesheets
-  static_dir: stylesheets
-
-- url: /images
-  static_dir: images
+- url: /themes
+  static_dir: themes
 
 - url: /admin/.*
   script: _go_app
@@ -20,5 +17,4 @@ handlers:
 
 - url: /.*
   script: _go_app
-
 

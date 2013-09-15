@@ -10,6 +10,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -99,6 +100,7 @@ type TemplateContext struct {
 	SiteTitle       string
 	SiteSubTitle    string
 	SiteDescription string
+	SiteTheme       string
 	BaseUrl         template.HTML
 
 	Version string
@@ -142,10 +144,15 @@ func loadTemplate(paths ...string) *template.Template {
 }
 
 var (
-	config     = yaml.ConfigFile(CONFIG_PATH)
-	archiveTpl = loadTemplate("templates/base.html", "templates/archive.html")
-	entryTpl   = loadTemplate("templates/base.html", "templates/entry.html")
-	errorTpl   = loadTemplate("templates/base.html", "templates/error.html")
+	config = yaml.ConfigFile(CONFIG_PATH)
+
+	theme_path      = filepath.Join("themes", config.Require("theme"))
+	base_theme_path = filepath.Join(theme_path, "base.html")
+
+	archiveTpl = loadTemplate(base_theme_path, filepath.Join(theme_path, "archive.html"))
+	entryTpl   = loadTemplate(base_theme_path, filepath.Join(theme_path, "entry.html"))
+
+	errorTpl = loadTemplate(base_theme_path, "templates/error.html")
 
 	feedTpl = loadTemplate("templates/feed.html")
 
@@ -231,6 +238,7 @@ func GetTemplateContext(entries []Entry, pageTitle string, pageId string, r *htt
 	t = TemplateContext{
 		BaseUrl:               template.HTML(base_url),
 		SiteTitle:             config.Require("title"),
+		SiteTheme:             config.Require("theme"),
 		SiteSubTitle:          config.Require("subtitle"),
 		SiteDescription:       config.Require("description"),
 		Version:               VERSION,
