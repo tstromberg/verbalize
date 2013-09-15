@@ -4,7 +4,25 @@
   <div class="container">
     <h1>Your Links</h1>
 
-    This function is not currently implemented.
+    <p>To update existing links, please use the Datastore Viewer. Lame, I know.</p>
 
+    <form action="/admin/submit_links" method="post" class="form-inline">
+    <table id="links" class="table table-bordered table-striped">
+      <thead><tr><th>Order</th><th>Title</th><th>URL</th></tr></thead>
+      {{ range .Links }}
+      <tr>
+        <td>{{.Order}}</td>
+        <td>{{.Title}}</td>
+        <td>{{.URL}}</td>
+      </tr>
+      {{ end }}
+      <tr>
+        <td><input id="new_order" name="new_order" type="number" value="0" min="0" max="99"></td>
+        <td><input id="new_title" name="new_title" size="25"></td>
+        <td><input id="new_url" name="new_url" type="url" size="120"></td>
+      </tr>
+      </table>
+      <button type="submit" class="btn btn-primary">Save</button>
+    </form>
   </div>
 {{ end }}

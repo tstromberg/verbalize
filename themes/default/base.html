@@ -9,7 +9,7 @@
 <body>
   <div id="wrapper">
     <header id="left">
-    <div id="sitelogo"><a href="{{.BaseUrl}}"><img src="/themes/{{.SiteTheme}}/sprocket.jpg" alt="Site Logo"></a></div>
+    <div id="sitelogo"><a href="{{.BaseURL}}"><img src="/themes/{{.SiteTheme}}/sprocket.jpg" alt="Site Logo"></a></div>
       <h1>{{ .SiteTitle }}</h1>
       <h2>{{ .SiteSubTitle }}</h2>
       <p id="site_description">{{ .SiteDescription }}</p>
@@ -17,7 +17,7 @@
       <ul>
         {{ range .Links }}
         <li>
-          <a href="{{.Url}}">{{.Title}}</a>
+          <a href="{{.URL}}">{{.Title}}</a>
         </li>
         {{ end }}
       </ul>

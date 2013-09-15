@@ -27,10 +27,10 @@
   {{ range .Entries }}
           <article>
           <header>
-            <h1><a href="{{$.BaseUrl}}{{.RelativeUrl}}">{{.Title}}</a>
+            <h1><a href="{{$.BaseURL}}{{.RelativeURL}}">{{.Title}}</a>
             </h1>
               <div class="comment_info">
-                <a class="comment_count" href="{{$.BaseUrl}}{{.RelativeUrl}}#disqus_thread"></a></span>
+                <a class="comment_count" href="{{$.BaseURL}}{{.RelativeURL}}#disqus_thread"></a></span>
               </div>
               <div class="author">{{.Author}}</div>
               <div class="date">{{.Year}}-{{.Month}}-{{.Day}}</div>
@@ -39,7 +39,7 @@
             <section class="post">
               {{.Excerpt }}
               {{ if .IsExcerpted }}
-                <div class="more"><a href="{{$.BaseUrl}}{{.RelativeUrl}}">Read on...</a></div>
+                <div class="more"><a href="{{$.BaseURL}}{{.RelativeURL}}">Read on...</a></div>
               {{ end }}
             </section>
           </article>

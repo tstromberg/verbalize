@@ -21,3 +21,8 @@ indexes:
   - name: IsPublished
   - name: PublishDate
     direction: desc
+
+- kind: Links
+  properties:
+  - name: Order
+  - name: Title

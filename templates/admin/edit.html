@@ -17,7 +17,7 @@
 {{ define "content" }}
 {{ range .Entries }}
   <div class="container">
-    <form action="/admin/submit" method="post" class="form-inline">
+    <form action="/admin/submit_entry" method="post" class="form-inline">
       {{ if $.IsNewPost }}
         <legend>New Post</legend>
       {{ else }}

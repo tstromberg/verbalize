@@ -21,7 +21,7 @@ import (
 const (
 	// Internal constants
 	CONFIG_PATH = "verbalize.yml"
-	VERSION     = "zero.20130611"
+	VERSION     = "zero.20130915"
 )
 
 // Entry struct, stored in Datastore.
@@ -32,19 +32,24 @@ type Entry struct {
 	Title       string
 	Content     []byte
 	Slug        string
-	RelativeUrl string
-}
-
-// Link struct, stored in Datastore.
-type Link struct {
-	Title string
-	Url   string
-	Order int64
+	RelativeURL string
 }
 
 /* return a fetching key for a given entry */
 func (e *Entry) Key(c appengine.Context) *datastore.Key {
 	return datastore.NewKey(c, "Entries", e.Slug, 0, nil)
+}
+
+// Link struct, stored in Datastore.
+type Link struct {
+	Title string
+	URL   string
+	Order int64
+}
+
+/* return a fetching key for a given entry */
+func (l *Link) Key(c appengine.Context) *datastore.Key {
+	return datastore.NewKey(c, "Links", l.URL, 0, nil)
 }
 
 /* a mirror of Entry, with markings for raw HTML encoding. */
@@ -64,7 +69,7 @@ type EntryContext struct {
 	Excerpt        template.HTML
 	EscapedExcerpt string
 	IsExcerpted    bool
-	RelativeUrl    string
+	RelativeURL    string
 	Slug           string
 }
 
@@ -90,7 +95,7 @@ func (e *Entry) Context() EntryContext {
 		Excerpt:        template.HTML(excerpt),
 		EscapedExcerpt: string(excerpt),
 		IsExcerpted:    len(e.Content) != len(excerpt),
-		RelativeUrl:    e.RelativeUrl,
+		RelativeURL:    e.RelativeURL,
 		Slug:           e.Slug,
 	}
 }
@@ -101,7 +106,7 @@ type TemplateContext struct {
 	SiteSubTitle    string
 	SiteDescription string
 	SiteTheme       string
-	BaseUrl         template.HTML
+	BaseURL         template.HTML
 
 	Version string
 
@@ -216,7 +221,8 @@ func renderTemplate(w http.ResponseWriter, tmpl template.Template, context inter
 	}
 }
 
-func GetTemplateContext(entries []Entry, pageTitle string, pageId string, r *http.Request) (
+func GetTemplateContext(entries []Entry, links []Link, pageTitle string,
+	pageId string, r *http.Request) (
 	t TemplateContext, err error) {
 	entry_contexts := make([]EntryContext, 0, len(entries))
 	for _, entry := range entries {
@@ -236,7 +242,7 @@ func GetTemplateContext(entries []Entry, pageTitle string, pageId string, r *htt
 	google_analytics_domain, _ := config.Get("google_analytics_domain")
 
 	t = TemplateContext{
-		BaseUrl:               template.HTML(base_url),
+		BaseURL:               template.HTML(base_url),
 		SiteTitle:             config.Require("title"),
 		SiteTheme:             config.Require("theme"),
 		SiteSubTitle:          config.Require("subtitle"),
@@ -245,6 +251,7 @@ func GetTemplateContext(entries []Entry, pageTitle string, pageId string, r *htt
 		PageTimeRfc3339:       time.Now().Format(time.RFC3339),
 		PageTimestamp:         time.Now().Unix() * 1000,
 		Entries:               entry_contexts,
+		Links:                 links,
 		PageTitle:             pageTitle,
 		PageId:                pageId,
 		DisqusId:              disqus_id,
@@ -254,6 +261,7 @@ func GetTemplateContext(entries []Entry, pageTitle string, pageId string, r *htt
 	return t, err
 }
 
+// GetEntries retrieves all or some blog entries from datastore
 func GetEntries(c appengine.Context, params EntryQuery) (entries []Entry, err error) {
 	if params.Count == 0 {
 		params.Count, _ = strconv.Atoi(config.Require("entries_per_page"))
@@ -276,10 +284,19 @@ func GetEntries(c appengine.Context, params EntryQuery) (entries []Entry, err er
 	return entries, err
 }
 
+// GetSingleEntry retrieves a single blog entry by slug from datastore
 func GetSingleEntry(c appengine.Context, slug string) (e Entry, err error) {
 	e.Slug = slug
 	err = datastore.Get(c, e.Key(c), &e)
 	return
+}
+
+// GetLinks retrieves all links in order from datastore
+func GetLinks(c appengine.Context) (links []Link, err error) {
+	q := datastore.NewQuery("Links").Order("Order").Order("Title")
+	links = make([]Link, 0)
+	_, err = q.GetAll(c, &links)
+	return links, err
 }
 
 // HTTP handler for rendering blog entries
@@ -289,6 +306,7 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 	title := "Error"
 	entries := make([]Entry, 0)
 	c := appengine.NewContext(r)
+	links, _ := GetLinks(c)
 
 	if r.URL.Path == "/" {
 		title = "Archive"
@@ -307,7 +325,7 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 	if len(entries) == 0 {
 		http.Error(w, "Nothing to see here.", http.StatusNotFound)
 	} else {
-		context, _ := GetTemplateContext(entries, title, "root", r)
+		context, _ := GetTemplateContext(entries, links, title, "root", r)
 		renderTemplate(w, template, context)
 	}
 }
@@ -317,7 +335,9 @@ func feedHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("%v", r.URL)
 	c := appengine.NewContext(r)
 	entries, _ := GetEntries(c, EntryQuery{})
-	context, _ := GetTemplateContext(entries, "Atom Feed", "feed", r)
+	links := make([]Link, 0)
+
+	context, _ := GetTemplateContext(entries, links, "Atom Feed", "feed", r)
 	err := feedTpl.Execute(w, context)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -328,7 +348,8 @@ func feedHandler(w http.ResponseWriter, r *http.Request) {
 func adminHomeHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 	entries, _ := GetEntries(c, EntryQuery{IncludeHidden: true})
-	context, _ := GetTemplateContext(entries, "Home", "admin_home", r)
+	links := make([]Link, 0)
+	context, _ := GetTemplateContext(entries, links, "Home", "admin_home", r)
 	renderTemplate(w, *adminHomeTpl, context)
 }
 
@@ -336,6 +357,7 @@ func adminHomeHandler(w http.ResponseWriter, r *http.Request) {
 func adminEditEntryHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 	entries := make([]Entry, 0)
+	links := make([]Link, 0)
 	entry := Entry{}
 	matches := edit_entry_re.FindStringSubmatch(r.URL.Path)
 	log.Printf("%s: %v", r.URL.Path, matches)
@@ -345,7 +367,7 @@ func adminEditEntryHandler(w http.ResponseWriter, r *http.Request) {
 		title = entry.Title
 	}
 	entries = append(entries, entry)
-	context, _ := GetTemplateContext(entries, title, "admin_edit", r)
+	context, _ := GetTemplateContext(entries, links, title, "admin_edit", r)
 	if len(matches) == 0 {
 		context.IsNewPost = true
 	} else {
@@ -391,7 +413,7 @@ func adminSubmitEntryHandler(w http.ResponseWriter, r *http.Request) {
 		entry.PublishDate = time.Now()
 	}
 
-	entry.RelativeUrl = fmt.Sprintf("%d/%02d/%s", entry.PublishDate.Year(),
+	entry.RelativeURL = fmt.Sprintf("%d/%02d/%s", entry.PublishDate.Year(),
 		entry.PublishDate.Month(), entry.Slug)
 
 	_, err := datastore.Put(c, entry.Key(c), &entry)
@@ -400,20 +422,37 @@ func adminSubmitEntryHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Printf("Saved entry: %v", entry)
-	http.Redirect(w, r, "/admin", http.StatusFound)
+	http.Redirect(w, r, fmt.Sprintf("/admin?added=%s", slug), http.StatusFound)
 }
 
 func adminLinksHandler(w http.ResponseWriter, r *http.Request) {
+	c := appengine.NewContext(r)
 	entries := make([]Entry, 0)
-	context, _ := GetTemplateContext(entries, "Links", "admin_links", r)
+	links, _ := GetLinks(c)
+	context, _ := GetTemplateContext(entries, links, "Links", "admin_links", r)
 	renderTemplate(w, *adminLinksTpl, context)
 }
 
 func adminSubmitLinksHandler(w http.ResponseWriter, r *http.Request) {
+	c := appengine.NewContext(r)
+	order, _ := strconv.Atoi(strings.TrimSpace(r.FormValue("new_order")))
+	link := Link{
+		Order: int64(order),
+		Title: strings.TrimSpace(r.FormValue("new_title")),
+		URL:   strings.TrimSpace(r.FormValue("new_url")),
+	}
+	_, err := datastore.Put(c, link.Key(c), &link)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	log.Printf("Saved entry: %v", link)
+	http.Redirect(w, r, fmt.Sprintf("/admin/links?added=%s", link.URL), http.StatusFound)
 }
 
 func adminCommentsHandler(w http.ResponseWriter, r *http.Request) {
 	entries := make([]Entry, 0)
-	context, _ := GetTemplateContext(entries, "Comments", "admin_comments", r)
+	links := make([]Link, 0)
+	context, _ := GetTemplateContext(entries, links, "Comments", "admin_comments", r)
 	renderTemplate(w, *adminCommentsTpl, context)
 }
