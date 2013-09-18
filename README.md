@@ -6,7 +6,8 @@ Features
 - [x] Disqus integration
 - [x] Ability to create arbitrary links
 - [x] Support for themes
-- [ ] Ability to create arbitrary pages
+- [x] Ability to create arbitrary pages
+- [ ] Per-date archiving
 - [ ] Page caching to avoid Datastore hits
 
 
