@@ -36,7 +36,7 @@
               {{.Content}}
             </section>
             <section id="comments">
-              <div id="disqus_thread"></div>
+              {{if .AllowComments}}<div id="disqus_thread"></div>{{ end }}
             </section>
           </article>
 

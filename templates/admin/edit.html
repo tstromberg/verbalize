@@ -1,7 +1,3 @@
-{{ define "stylesheets" }}
-{{ end }}
-
-
 {{ define "scripts" }}
 <script src="/third_party/ckeditor/ckeditor.js"></script>
 <script src="/third_party/jquery-slug/jquery.slug.js"></script>
@@ -18,24 +14,35 @@
 {{ range .Entries }}
   <div class="container">
     <form action="/admin/submit_entry" method="post" class="form-inline">
-      {{ if $.IsNewPost }}
-        <legend>New Post</legend>
+      {{ if .Slug }}
+        <legend>Edit</legend>
       {{ else }}
-      <legend>Edit</legend>
+      <legend>New {{ if .IsPage }}Page{{ else }}Post{{ end }}</legend>
+        <input type="hidden" name="is_new_post" value="1">
       {{ end }}
       <div style="margin-bottom: 8px;">
         <input id="title" type="text" class="input-xlarge" name="title" value="{{.Title}}" placeholder="Title"/>
         <input id="slug" type="text" class="input-medium" name="slug" value="{{.Slug}}" placeholder="URL Slug"/>
         <label class="checkbox">
           <input type="checkbox" value="1" name="hidden">
-          Hide this post
+          Hide this {{ if .IsPage }}page{{ else }}post{{ end }}
+          <input type="checkbox"
+          {{ if .IsPage }}
+            value="0"
+          {{ else }}
+            value="1"
+          {{ end }}
+          name="allow_comments">
+          Allow Comments
         </label>
       </div>
       <textarea class="ckeditor" rows="30" name="content">{{.Content}}</textarea>
       <div style="margin-top: 8px;">
         <button type="submit" class="btn btn-primary">Save</button>
       </div>
-      <input type="hidden" name="is_new_post" value="{{$.IsNewPost}}" />
+      {{ if .IsPage }}
+        <input type="hidden" name="is_page" value="1">
+      {{ end }}
     </form>
   </div>
   {{ end }}

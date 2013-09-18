@@ -13,6 +13,19 @@ indexes:
 - kind: Entries
   properties:
   - name: IsHidden
+  - name: IsPage
+  - name: PublishDate
+    direction: desc
+
+- kind: Entries
+  properties:
+  - name: IsHidden
+  - name: PublishDate
+    direction: desc
+
+- kind: Entries
+  properties:
+  - name: IsPage
   - name: PublishDate
     direction: desc
 

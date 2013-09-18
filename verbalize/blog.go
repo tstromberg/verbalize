@@ -26,13 +26,16 @@ const (
 
 // Entry struct, stored in Datastore.
 type Entry struct {
-	Author      string
-	IsHidden    bool
-	PublishDate time.Time
-	Title       string
-	Content     []byte
-	Slug        string
-	RelativeURL string
+	Author   string
+	IsHidden bool
+	// Is this a page, or a blog entry?
+	IsPage        bool
+	AllowComments bool
+	PublishDate   time.Time
+	Title         string
+	Content       []byte
+	Slug          string
+	RelativeURL   string
 }
 
 /* return a fetching key for a given entry */
@@ -56,6 +59,8 @@ func (l *Link) Key(c appengine.Context) *datastore.Key {
 type EntryContext struct {
 	Author         string
 	IsHidden       bool
+	IsPage         bool
+	AllowComments  bool
 	Timestamp      int64
 	Day            int
 	RfcDate        string
@@ -75,13 +80,14 @@ type EntryContext struct {
 
 /* Entry.Context() generates template data from a stored entry */
 func (e *Entry) Context() EntryContext {
-	log.Printf("More tag is: %v", config.Require("more_tag"))
 	excerpt := bytes.SplitN(e.Content, []byte(config.Require("more_tag")),
 		2)[0]
 
 	return EntryContext{
 		Author:         e.Author,
 		IsHidden:       e.IsHidden,
+		IsPage:         e.IsPage,
+		AllowComments:  e.AllowComments,
 		Timestamp:      e.PublishDate.UTC().Unix(),
 		Day:            e.PublishDate.Day(),
 		Hour:           e.PublishDate.Hour(),
@@ -121,9 +127,6 @@ type TemplateContext struct {
 	GoogleAnalyticsId     string
 	GoogleAnalyticsDomain string
 	Hostname              template.HTML
-
-	// TODO(tstromberg): Split these into a separate admin page
-	IsNewPost bool
 }
 
 /* Structure used for querying for blog entries */
@@ -132,6 +135,7 @@ type EntryQuery struct {
 	End           time.Time
 	Count         int
 	IncludeHidden bool
+	IsPage        bool
 	Tag           string // unused
 }
 
@@ -163,11 +167,11 @@ var (
 
 	adminEditTpl     = loadTemplate("templates/admin/base.html", "templates/admin/edit.html")
 	adminHomeTpl     = loadTemplate("templates/admin/base.html", "templates/admin/home.html")
+	adminPagesTpl    = loadTemplate("templates/admin/base.html", "templates/admin/pages.html")
 	adminLinksTpl    = loadTemplate("templates/admin/base.html", "templates/admin/links.html")
 	adminCommentsTpl = loadTemplate("templates/admin/base.html", "templates/admin/comments.html")
 
 	// regexp matching an entry URL
-	view_entry_re = regexp.MustCompile(`\d{4}/\d{2}/(?P<slug>[\w-]+)$`)
 	edit_entry_re = regexp.MustCompile(`edit/(?P<slug>[\w-]+)$`)
 )
 
@@ -177,8 +181,9 @@ func init() {
 	http.HandleFunc("/", rootHandler)
 	http.HandleFunc("/feed/", feedHandler)
 
-	http.HandleFunc("/admin/", adminHomeHandler)
-	http.HandleFunc("/admin/edit/", adminEditEntryHandler)
+	http.HandleFunc("/admin", adminHomeHandler)
+	http.HandleFunc("/admin/pages", adminPagesHandler)
+	http.HandleFunc("/admin/edit", adminEditEntryHandler)
 	http.HandleFunc("/admin/submit_entry", adminSubmitEntryHandler)
 	http.HandleFunc("/admin/links", adminLinksHandler)
 	http.HandleFunc("/admin/submit_links", adminSubmitLinksHandler)
@@ -266,7 +271,8 @@ func GetEntries(c appengine.Context, params EntryQuery) (entries []Entry, err er
 	if params.Count == 0 {
 		params.Count, _ = strconv.Atoi(config.Require("entries_per_page"))
 	}
-	q := datastore.NewQuery("Entries").Order("-PublishDate").Limit(params.Count)
+	q := datastore.NewQuery("Entries").Filter("IsPage = ", params.IsPage).Order(
+		"-PublishDate").Limit(params.Count)
 
 	if params.Start.IsZero() == false {
 		q = q.Filter("PublishDate >", params.End)
@@ -275,7 +281,6 @@ func GetEntries(c appengine.Context, params EntryQuery) (entries []Entry, err er
 		q = q.Filter("PublishDate <", params.End)
 	}
 	if params.IncludeHidden == false {
-		log.Printf("Hiding hidden entries")
 		q = q.Filter("IsHidden = ", false)
 	}
 	log.Printf("Query: %v", q)
@@ -301,9 +306,9 @@ func GetLinks(c appengine.Context) (links []Link, err error) {
 
 // HTTP handler for rendering blog entries
 func rootHandler(w http.ResponseWriter, r *http.Request) {
-	log.Printf("%s", r.URL.Path)
 	template := *errorTpl
 	title := "Error"
+
 	entries := make([]Entry, 0)
 	c := appengine.NewContext(r)
 	links, _ := GetLinks(c)
@@ -311,30 +316,26 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/" {
 		title = "Archive"
 		template = *archiveTpl
-		entries, _ = GetEntries(c, EntryQuery{})
-	}
-
-	matches := view_entry_re.FindStringSubmatch(r.URL.Path)
-	if len(matches) > 0 {
-		entry, _ := GetSingleEntry(c, matches[1])
-		entries = append(entries, entry)
-		template = *entryTpl
-		title = entries[0].Title
-	}
-
-	if len(entries) == 0 {
-		http.Error(w, "Nothing to see here.", http.StatusNotFound)
+		entries, _ = GetEntries(c, EntryQuery{IsPage: false})
 	} else {
-		context, _ := GetTemplateContext(entries, links, title, "root", r)
-		renderTemplate(w, template, context)
+		entry, err := GetSingleEntry(c, filepath.Base(r.URL.Path))
+		if err != nil {
+			http.Error(w, "Nothing.", http.StatusNotFound)
+		} else {
+			title = entry.Title
+			entries = append(entries, entry)
+			template = *entryTpl
+		}
 	}
+	context, _ := GetTemplateContext(entries, links, title, "root", r)
+	renderTemplate(w, template, context)
 }
 
 // HTTP handler for /feed
 func feedHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("%v", r.URL)
 	c := appengine.NewContext(r)
-	entries, _ := GetEntries(c, EntryQuery{})
+	entries, _ := GetEntries(c, EntryQuery{IsPage: false})
 	links := make([]Link, 0)
 
 	context, _ := GetTemplateContext(entries, links, "Atom Feed", "feed", r)
@@ -347,32 +348,44 @@ func feedHandler(w http.ResponseWriter, r *http.Request) {
 // HTTP handler for /admin
 func adminHomeHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
-	entries, _ := GetEntries(c, EntryQuery{IncludeHidden: true})
-	links := make([]Link, 0)
-	context, _ := GetTemplateContext(entries, links, "Home", "admin_home", r)
+	entries, _ := GetEntries(c, EntryQuery{IncludeHidden: true, IsPage: false})
+	context, _ := GetTemplateContext(entries, nil, "Home", "admin_home", r)
 	renderTemplate(w, *adminHomeTpl, context)
+}
+
+// HTTP handler for /admin/pages
+func adminPagesHandler(w http.ResponseWriter, r *http.Request) {
+	c := appengine.NewContext(r)
+	entries, _ := GetEntries(c, EntryQuery{IncludeHidden: true, IsPage: true})
+	context, _ := GetTemplateContext(entries, nil, "Pages", "admin_pages", r)
+	renderTemplate(w, *adminPagesTpl, context)
 }
 
 // HTTP handler for /edit
 func adminEditEntryHandler(w http.ResponseWriter, r *http.Request) {
+	slug := strings.TrimSpace(r.FormValue("slug"))
+	is_page := strings.TrimSpace(r.FormValue("is_page"))
+
 	c := appengine.NewContext(r)
-	entries := make([]Entry, 0)
-	links := make([]Link, 0)
-	entry := Entry{}
-	matches := edit_entry_re.FindStringSubmatch(r.URL.Path)
-	log.Printf("%s: %v", r.URL.Path, matches)
+
+	// just defaults.
 	title := "New"
-	if len(matches) > 0 {
-		entry, _ = GetSingleEntry(c, matches[1])
+	entry := Entry{}
+
+	if slug != "" {
+		entry, err := GetSingleEntry(c, slug)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 		title = entry.Title
-	}
-	entries = append(entries, entry)
-	context, _ := GetTemplateContext(entries, links, title, "admin_edit", r)
-	if len(matches) == 0 {
-		context.IsNewPost = true
 	} else {
-		context.IsNewPost = false
+		if is_page != "" {
+			entry.IsPage = true
+		}
 	}
+	entries := make([]Entry, 0)
+	entries = append(entries, entry)
+	context, _ := GetTemplateContext(entries, nil, title, "admin_edit", r)
 	renderTemplate(w, *adminEditTpl, context)
 }
 
@@ -394,17 +407,17 @@ func adminSubmitEntryHandler(w http.ResponseWriter, r *http.Request) {
 
 	c := appengine.NewContext(r)
 
-	if r.FormValue("is_new_post") == "true" {
+	if r.FormValue("is_new_post") == "1" {
 		if u := user.Current(c); u != nil {
 			entry.Author = u.String()
 		}
 	} else {
 		entry, _ = GetSingleEntry(c, slug)
 	}
-	log.Printf("%v", r.FormValue("hidden"))
-	if r.FormValue("hidden") == "1" {
-		entry.IsHidden = true
-	}
+
+	entry.IsHidden, _ = strconv.ParseBool(r.FormValue("hidden"))
+	entry.AllowComments, _ =  strconv.ParseBool(r.FormValue("allow_comments"))
+	entry.IsPage, _ =  strconv.ParseBool(r.FormValue("is_page"))
 	entry.Content = []byte(content)
 	entry.Title = title
 	entry.Slug = slug
@@ -413,9 +426,12 @@ func adminSubmitEntryHandler(w http.ResponseWriter, r *http.Request) {
 		entry.PublishDate = time.Now()
 	}
 
-	entry.RelativeURL = fmt.Sprintf("%d/%02d/%s", entry.PublishDate.Year(),
-		entry.PublishDate.Month(), entry.Slug)
-
+	if entry.IsPage {
+		entry.RelativeURL = entry.Slug
+	} else {
+		entry.RelativeURL = fmt.Sprintf("%d/%02d/%s", entry.PublishDate.Year(),
+			entry.PublishDate.Month(), entry.Slug)
+	}
 	_, err := datastore.Put(c, entry.Key(c), &entry)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -427,9 +443,8 @@ func adminSubmitEntryHandler(w http.ResponseWriter, r *http.Request) {
 
 func adminLinksHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
-	entries := make([]Entry, 0)
 	links, _ := GetLinks(c)
-	context, _ := GetTemplateContext(entries, links, "Links", "admin_links", r)
+	context, _ := GetTemplateContext(nil, links, "Links", "admin_links", r)
 	renderTemplate(w, *adminLinksTpl, context)
 }
 
@@ -451,8 +466,6 @@ func adminSubmitLinksHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func adminCommentsHandler(w http.ResponseWriter, r *http.Request) {
-	entries := make([]Entry, 0)
-	links := make([]Link, 0)
-	context, _ := GetTemplateContext(entries, links, "Comments", "admin_comments", r)
+	context, _ := GetTemplateContext(nil, nil, "Comments", "admin_comments", r)
 	renderTemplate(w, *adminCommentsTpl, context)
 }
