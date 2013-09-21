@@ -21,8 +21,9 @@ import (
 const (
 	// Internal constants
 	CONFIG_PATH = "verbalize.yml"
-	VERSION     = "zero.20130915"
+	VERSION     = "zero.20130921"
 )
+
 
 // Entry struct, stored in Datastore.
 type Entry struct {
@@ -284,6 +285,7 @@ func GetEntries(c appengine.Context, params EntryQuery) (entries []Entry, err er
 		q = q.Filter("IsHidden = ", false)
 	}
 	log.Printf("Query: %v", q)
+
 	entries = make([]Entry, 0, params.Count)
 	_, err = q.GetAll(c, &entries)
 	return entries, err
