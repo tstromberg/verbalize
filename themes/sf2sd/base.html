@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>{{ .PageTitle }} - {{ .SiteTitle }}</title>
+  <meta charset="UTF-8">
+  <link href='http://fonts.googleapis.com/css?family=Playfair+Display|Open+Sans:300italic,400,300,600,700,800|Merriweather:400,900,700,300' rel='stylesheet' type='text/css'>
+  <link rel="stylesheet" href="/themes/{{.SiteTheme}}/style.css">
+</head>
+<body>
+
+  <div id="wrapper">
+    <header id="top">
+      <nav id="links">
+      <ul>
+        <li><a href="/about">About</a></li>
+        <li><a href="/donate">Donate!</a></li>
+        <li><a href="http://www.aidslifecycle.org/">AIDS/LifeCycle</a></li>
+      </ul>
+      </nav>
+    <h1>{{ .SiteTitle }}</h1>
+    <h2>{{ .SiteSubTitle }}</h2>
+    </header>
+
+    <header id="left">
+    <div id="me"><img src="/themes/sf2sd/me.jpg" alt="me"></div>
+    <p>Hi! I am Thomas, and I am riding across California to realize a dream and raise money for the <a href="http://www.aidslifecycle.org/beneficiaries/sfaf.html">SF AIDS Foundation</a>.</p>
+    <p>Won't you <a href="/donate">help?</a></p>
+
+    <div id="progress">
+    <img src="http://www.tofighthiv.org/images/alc/alc-thermometer-6.gif" alt="6%">
+    <p>
+    Goal: $5,000.00
+    Achieved: $315.15
+    </p>
+  </div>
+
+    <div id="days_left">
+      <h3>262</h3>
+      <p>Days until ALC 2014</p>
+    </div>
+
+    </header>
+
+    <div id="right">
+      <div id="content">
+
+        {{ template "content" . }}
+      </div>
+      <footer>Proudly powered by <a href="https://github.com/tstromberg/verbalize">verbalize</a> {{.Version}} and <a href="http://appspot.com/">Google AppEngine</a></footer>
+  </div>
+  {{ template "scripts" . }}
+
+
+</body>
+</html>
