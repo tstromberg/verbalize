@@ -30,14 +30,20 @@
             <header>
             <h1><a href="{{$.BaseURL}}{{.RelativeURL}}">{{.Title}}</a></h1>
               <div class="author">{{.Author}}</div>
+              {{ if .IsPage }}
+              {{ else }}
               <div class="date">{{.Year}}-{{.Month}}-{{.Day}}</div>
+              {{ end }}
               </header>
             <section class="post">
               {{.Content}}
-            </section>
+              </section>
+
+            {{ if .AllowComments }}
             <section id="comments">
               <div id="disqus_thread"></div>
-            </section>
+              </section>
+            {{ end }}
           </article>
 
 
