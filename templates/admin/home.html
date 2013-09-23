@@ -24,7 +24,7 @@ var disqus_shortname = '{{.DisqusId}}';
           <a href="{{$.BaseURL}}{{.RelativeURL}}">{{.Title}}</a>
           {{ if .IsHidden }}<span class="glyphicon glyphicon-eye-close"></span>{{ end }}
         </td>
-        <td><a href="edit?slug={{.Slug}}"><span class="glyphicon glyphicon-pencil"></span></a></td>
+        <td><a href="/admin/edit?slug={{.Slug}}"><span class="glyphicon glyphicon-pencil"></span></a></td>
         <td><a class="comment_count" href="{{$.BaseURL}}{{.RelativeURL}}#disqus_thread"></a></td>
         <td>{{.RfcDate}}</td>
       </tr>

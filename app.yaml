@@ -1,4 +1,4 @@
-application: sprocket-io
+application: verbalize
 version: 1
 runtime: go
 api_version: go1
@@ -7,8 +7,9 @@ handlers:
 - url: /third_party
   static_dir: third_party
 
-- url: /themes
-  static_dir: themes
+- url: /themes/(.*)/(.*\.(gif|png|jpg|css))
+  static_files: themes/\1/\2
+  upload: themes/(.*\.(gif|png|jpg|css))
 
 - url: /admin/.*
   script: _go_app
