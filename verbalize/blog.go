@@ -3,7 +3,9 @@ package blog
 import (
 	"appengine"
 	"appengine/datastore"
+	"appengine/urlfetch"
 	"appengine/user"
+	"bufio"
 	"bytes"
 	"fmt"
 	"github.com/kylelemons/go-gypsy/yaml"
@@ -117,6 +119,7 @@ type TemplateContext struct {
 	BaseURL         template.HTML
 
 	Version string
+	Context appengine.Context
 
 	PageTitle       string
 	PageId          string
@@ -141,11 +144,57 @@ type EntryQuery struct {
 	Tag           string // unused
 }
 
+// DaysUntil returns the number of days until a date - used for templates.
+func DaysUntil(dateStr string) (days int, err error) {
+	target, err := time.Parse("1/2/2006", dateStr)
+	if err != nil {
+		return -1, err
+	}
+	duration := target.Sub(time.Now())
+	days = int(duration.Seconds() / 86400)
+	return
+}
+
+// ExtractPage extracts content from a given URL - used for templates.
+func ExtractPageContent(c appengine.Context, URL, start_token, end_token string) (content template.HTML, err error) {
+	client := urlfetch.Client(c)
+	resp, err := client.Get(URL)
+
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	scanner := bufio.NewScanner(resp.Body)
+	inBlock := false
+	buffer := new(bytes.Buffer)
+
+	for scanner.Scan() {
+		// TODO(tstromberg): Use something that doesn't depend on newlines.
+		if strings.Contains(scanner.Text(), start_token) {
+			inBlock = true
+		}
+		if strings.Contains(scanner.Text(), end_token) {
+			inBlock = false
+		}
+		if inBlock == true {
+			buffer.Write(scanner.Bytes())
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return "", err
+	}
+	return template.HTML(buffer.String()), nil
+}
+
 // load and configure set of templates
 func loadTemplate(paths ...string) *template.Template {
 	t := template.New(strings.Join(paths, ","))
 	t.Funcs(template.FuncMap{
-		"eq": reflect.DeepEqual,
+		"eq":                 reflect.DeepEqual,
+		"DaysUntil":          DaysUntil,
+		"ExtractPageContent": ExtractPageContent,
 	})
 	_, err := t.ParseFiles(paths...)
 	if err != nil {
@@ -194,34 +243,8 @@ func init() {
 
 }
 
-// equality function for templates. Courtesy of Russ Cox
-// https://groups.google.com/forum/#!topic/golang-nuts/OEdSDgEC7js
-func equals(args ...interface{}) bool {
-	if len(args) == 0 {
-		return false
-	}
-	x := args[0]
-	switch x := x.(type) {
-	case string, int, int64, byte, float32, float64:
-		for _, y := range args[1:] {
-			if x == y {
-				return true
-			}
-		}
-		return false
-	}
-
-	for _, y := range args[1:] {
-		if reflect.DeepEqual(x, y) {
-			return true
-		}
-	}
-	return false
-}
-
 // Render a named template name to the HTTP channel
 func renderTemplate(w http.ResponseWriter, tmpl template.Template, context interface{}) {
-
 	err := tmpl.ExecuteTemplate(w, "base.html", context)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
@@ -250,6 +273,8 @@ func GetTemplateContext(entries []Entry, links []Link, pageTitle string,
 	google_analytics_id, _ := config.Get("google_analytics_id")
 	google_analytics_domain, _ := config.Get("google_analytics_domain")
 
+	c := appengine.NewContext(r)
+
 	t = TemplateContext{
 		BaseURL:               template.HTML(base_url),
 		SiteTitle:             config.Require("title"),
@@ -266,6 +291,7 @@ func GetTemplateContext(entries []Entry, links []Link, pageTitle string,
 		DisqusId:              disqus_id,
 		GoogleAnalyticsId:     google_analytics_id,
 		GoogleAnalyticsDomain: google_analytics_domain,
+		Context:               c,
 	}
 	return t, err
 }

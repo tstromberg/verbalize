@@ -27,16 +27,12 @@
     <p>Won't you <a href="/donate">help?</a></p>
 
     <div id="progress">
-    <img src="http://www.tofighthiv.org/images/alc/alc-thermometer-6.gif" alt="6%">
-    <p>
-    Goal: $5,000.00
-    Achieved: $315.15
-    </p>
-  </div>
+      {{ExtractPageContent .Context "http://www.tofighthiv.org/site/TR/AIDSLIFECYCLE2014/AIDSLifeCycleCenter?px=2956163&pg=personal&fr_id=1630" "thermometerTall" "</td"}}
+    </div>
 
     <div id="days_left">
-      <h3>262</h3>
-      <p>Days until ALC 2014</p>
+      <h3>{{DaysUntil "6/1/2014"}}</h3>
+      <p>Days until <a href="http://www.aidslifecycle.org/">ALC 2014</a></p>
     </div>
 
     </header>
