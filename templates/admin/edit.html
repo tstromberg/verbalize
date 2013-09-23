@@ -26,13 +26,7 @@
         <label class="checkbox">
           <input type="checkbox" value="1" name="hidden">
           Hide this {{ if .IsPage }}page{{ else }}post{{ end }}
-          <input type="checkbox"
-          {{ if .IsPage }}
-            value="0"
-          {{ else }}
-            value="1"
-          {{ end }}
-          name="allow_comments">
+          <input type="checkbox" {{ if .IsPage }}{{ else }}checked{{ end }} name="allow_comments">
           Allow Comments
         </label>
       </div>

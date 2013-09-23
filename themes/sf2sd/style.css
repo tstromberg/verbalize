@@ -288,11 +288,9 @@ header .author {
 
 }
 
-#footer {
-  position: fixed;
-  bottom: 1em;
-  /* TODO(tstromberg): Add real centering */
-  left: 5em;
+footer {
+  text-align: right;
+  background-color: #000;
   width: 100%;
   font-size: small;
   font-weight: 300;
