@@ -211,6 +211,7 @@ var (
 
 	archiveTpl = loadTemplate(base_theme_path, filepath.Join(theme_path, "archive.html"))
 	entryTpl   = loadTemplate(base_theme_path, filepath.Join(theme_path, "entry.html"))
+	pageTpl    = loadTemplate(base_theme_path, filepath.Join(theme_path, "page.html"))
 
 	errorTpl = loadTemplate(base_theme_path, "templates/error.html")
 
@@ -362,7 +363,11 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 		} else {
 			title = entry.Title
 			entries = append(entries, entry)
-			template = *entryTpl
+			if entry.IsPage == true {
+				template = *pageTpl
+			} else {
+				template = *entryTpl
+			}
 		}
 	}
 	context, _ := GetTemplateContext(entries, links, title, "root", r)
@@ -483,7 +488,11 @@ func adminSubmitEntryHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Printf("Saved entry: %v", entry)
-	http.Redirect(w, r, fmt.Sprintf("/admin?added=%s", slug), http.StatusFound)
+	if entry.IsPage {
+		http.Redirect(w, r, fmt.Sprintf("/admin/pages?added=%s", slug), http.StatusFound)
+	} else {
+		http.Redirect(w, r, fmt.Sprintf("/admin?added=%s", slug), http.StatusFound)
+	}
 }
 
 func adminLinksHandler(w http.ResponseWriter, r *http.Request) {
