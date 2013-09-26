@@ -246,6 +246,7 @@ func init() {
 
 // Render a named template name to the HTTP channel
 func renderTemplate(w http.ResponseWriter, tmpl template.Template, context interface{}) {
+	log.Printf("Rendering %s", tmpl.Name())
 	err := tmpl.ExecuteTemplate(w, "base.html", context)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
@@ -382,11 +383,7 @@ func feedHandler(w http.ResponseWriter, r *http.Request) {
 	links := make([]Link, 0)
 
 	context, _ := GetTemplateContext(entries, links, "Atom Feed", "feed", r)
-	err := feedTpl.Execute(w, context)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	feedTpl.ExecuteTemplate(w, "feed.html", context)
 }
 
 // HTTP handler for /admin

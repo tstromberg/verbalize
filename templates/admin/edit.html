@@ -7,6 +7,13 @@
     slug = $.slug( $(this).val() );
     $('#slug').val(slug);
   });
+
+  // Enable new CKeditor plugin.
+  CKEDITOR.replace('editor', {
+    extraPlugins: 'image2',
+    removePlugins: 'image,forms'
+  });
+
 </script>
 {{ end }}
 
@@ -30,7 +37,7 @@
           Allow Comments
         </label>
       </div>
-      <textarea class="ckeditor" rows="30" name="content">{{.Content}}</textarea>
+      <textarea class="ckeditor" id="editor" rows="30" name="content">{{.Content}}</textarea>
       <div style="margin-top: 8px;">
         <button type="submit" class="btn btn-primary">Save</button>
       </div>

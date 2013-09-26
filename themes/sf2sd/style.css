@@ -1,16 +1,31 @@
+/* @override 
+	http://www.sf2sd.org/themes/sf2sd/style.css
+	http://localhost:8080/themes/sf2sd/style.css
+*/
+
 html {
   margin: 0;
   padding: 0;
   font-family: 'Open Sans', sans-serif;
   background: url(./rover.gif) no-repeat fixed 0 0;
   background-size: cover;
-  color:  #d5d5d5;
+  color:  #d0d0d0;
 }
 
 h1 {
   font-weight: 800;
-  margin-top: 0.5em;
+  font-size:  40px;  
 }
+
+h1 a {
+	text-decoration: none;
+	border-bottom: 2px solid #333;
+}
+
+h1 a:hover {
+	border-bottom: 2px solid #fff;
+}
+
 
 h2 {
   text-transform: uppercase;
@@ -28,7 +43,6 @@ h2 {
   margin-right:  auto;
   margin-top: 1em;
   background-color:  #000;
-  opacity: 0.93;
 }
 
 #top {
@@ -39,6 +53,17 @@ h2 {
   font-family: 'American Typewriter', Courier;
 }
 
+#clickme {
+	width: 350px;
+	height: 100px;
+	float: left;
+}
+
+.entry_title {
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+}
+
 #top h1 {
 	display:  none;
 }
@@ -46,12 +71,10 @@ h2 {
 #top h2 {
    float: right;
    position: relative;
-   clear: both;
    color: #472a3a;
    letter-spacing: 0.2em;
    padding-right: 8px;
    font-size: 18px;
-   margin: 0;
    font-weight: 500;
 }
 
@@ -77,14 +100,15 @@ nav li {
 }
 
 #left {
-  width: 200px;
-  max-width: 200px;
+  width: 190px;
+  max-width: 190px;
   height: 100%;
   float:  left;
 }
 
 #left a {
-	color: #b17db4}
+	color: #b17db4
+}
 
 #left p {
 	padding-left: 1em;
@@ -110,9 +134,9 @@ nav li {
 	border: 2px solid #222;
 	margin: 1em;
 	background-color: #cecece;
-        text-align: center;
-        font-size: 90%;
-        font-family: Arial, Verdana;
+    text-align: center;
+    font-size: 90%;
+    font-family: Arial, Verdana;
 	color: #000;
 }
 
@@ -144,25 +168,18 @@ nav li {
 
 #right {
   padding: 8px;
-  margin-left: 200px;
-background: -moz-linear-gradient(top, #000000 0%, #090909 13%);
-background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#000000), color-stop(13%,#090909));
-background: -webkit-linear-gradient(top, #000000 0%,#090909 13%);
-background: -o-linear-gradient(top, #000000 0%,#090909 13%);
-background: -ms-linear-gradient(top, #000000 0%,#090909 13%);
-background: linear-gradient(to bottom, #000000 0%,#090909 13%);
+  margin-left: 190px;
+  background: -moz-linear-gradient(top, #000000 0%, #1A1A1A 5%);
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#000000), color-stop(13%,#1A1A1A));
+  background: -webkit-linear-gradient(top, #000000 0%,#1A1A1A 5%);
+  background: -o-linear-gradient(top, #000000 0%,#1A1A1A 5%);
+  background: -ms-linear-gradient(top, #000000 0%,#1A1A1A 5%);
+  background: linear-gradient(to bottom, #000000 0%,#1A1A1A 5%);
 }
 
 #content {
-	padding: 8px;
-        min-height: 800px;
-}
-
-#content h1 {
-  font-size: 250%;
-  margin: 0;
-  padding: 0;
-  margin-top: 0.1em;
+	padding-left: 8px;
+    min-height: 800px;
 }
 
 #content article {
@@ -173,7 +190,6 @@ background: linear-gradient(to bottom, #000000 0%,#090909 13%);
 
 #content .post {
   display: block;
-  font-family: Arial, Verdana, sans-serif;
 }
 
 .post ul {
@@ -185,12 +201,7 @@ background: linear-gradient(to bottom, #000000 0%,#090909 13%);
   margin-right: auto;
 }
 
-#content a {
-}
-
-#content h1 a {
-	font-family: 'Luckiest Guy', cursive;
-	font-family: "Impact";
+#content a, h1 {
 	color:  #fff;
 }
 
@@ -202,11 +213,6 @@ background: linear-gradient(to bottom, #000000 0%,#090909 13%);
 
 #id a {
   color: #fff;
-}
-
-
-.comment_info {
-	font-family:  "Impact";
 }
 
 #content a.comment_count {
@@ -227,6 +233,30 @@ background: linear-gradient(to bottom, #000000 0%,#090909 13%);
   color: #999;
 }
 
+#donate {
+	background-color: #76cc1e;
+	color:  #444;
+    border-radius: 6px;
+    display:  inline-block;	
+    text-align: center;
+    font-size: small;
+    padding: 0.75em;
+}
+
+#donate h4 {
+	font-size: large;
+	margin: 0;
+	color: #fff;
+}
+
+#donate:hover {
+	background-color: #86dc2e;
+}
+
+#donate a {
+	font-weight: bold;
+}
+
 header .author {
   display: none;
 }
@@ -241,14 +271,11 @@ header .author {
   color: #999;
 }
 
-#sitelogo img {
-
-}
-
 .caption {
+margin:  0;
   display: inline-block;
   margin-bottom: .5em;
-  background: #000;
+  background-color: #000;
   padding: 2px;
   -moz-box-sizing: border-box;
   -webkit-box-sizing: border-box;
@@ -256,36 +283,26 @@ header .author {
   box-sizing: border-box;
 }
 
-#content .caption p {
+figcaption {
   margin: 0;
   padding: 0;
   border: 0;
+  background-color: #000;
   color: #999;
   font-size: small;
+  color: #fff;
   text-align: right;
-  width: 99%;
-  max-width: 100%;
   margin-right: 1em;
   font-family:  "Courier New", Courier, monospace;
 }
 
-#links {
-
-}
-
-#links ul {
-
-}
-
-#links li {
-
-}
-
-#links a {
-
+h3>strong {
+	color:  #f00;
+	font-weight: normal;
 }
 
 footer {
+  color: #666;
   text-align: right;
   background-color: #000;
   width: 100%;
@@ -293,8 +310,9 @@ footer {
   font-weight: 300;
 }
 
-#footer a {
+footer a {
   text-decoration: underline;
+  color: #999;
 }
 
 #disqus_thread {
@@ -319,13 +337,4 @@ footer {
 #entries td {
   background-color: #FFF;
 }
-
-/* formatting textarea */
-#edit_content {
-  width: 800px;
-  height: 400px;
-}
-
-
-
 

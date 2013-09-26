@@ -1,16 +1,4 @@
 {{ define "scripts" }}
-  {{ if .DisqusId }}
-  <script type="text/javascript">
-    var disqus_shortname = '{{.DisqusId}}';
-    (function() {
-        var dsq = document.createElement('script');
-        dsq.type = 'text/javascript';
-        dsq.async = true;
-        dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
-        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-    })();
-  </script>
-  {{ end }}
   {{ if .GoogleAnalyticsId }}
   <script>
     (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
@@ -27,16 +15,11 @@
 {{ define "content" }}
   {{ range .Entries }}
           <article>
-            <header><h1><a href="{{$.BaseURL}}{{.RelativeURL}}">{{.Title}}</a></h1></header>
+            <header><h1>{{.Title}}</h1></header>
             <section class="post">
               {{.Content}}
             </section>
-            <section id="comments">
-              {{if .AllowComments}}<div id="disqus_thread"></div>{{ end }}
-            </section>
           </article>
   {{ end }}
-
-  <noscript>Please enable JavaScript to comments</noscript>
 {{ end }}
 

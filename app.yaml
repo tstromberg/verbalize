@@ -11,8 +11,9 @@ handlers:
   static_files: themes/\1/\2
   upload: themes/(.*\.(gif|png|jpg|css))
 
-- url: /images
-  static_dir: images
+- url: /.*images/(.*\.(gif|png|jpg))
+  static_files: images/\1
+  upload: images/(.*\.(gif|png|jpg))
 
 - url: /admin/.*
   script: _go_app

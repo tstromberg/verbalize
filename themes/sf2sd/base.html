@@ -10,7 +10,8 @@
 
   <div id="wrapper">
     <header id="top">
-      <nav id="links">
+      <a href="/"><div id="clickme"></div></a>
+    <nav id="links">
       <ul>
         <li><a href="/about">About</a></li>
         <li><a href="/donate">Donate!</a></li>
@@ -23,8 +24,10 @@
 
     <header id="left">
     <div id="me"><img src="/themes/sf2sd/me.jpg" alt="me"></div>
-    <p>Hi! I am Thomas, and I am riding across California to realize a dream and raise money for the <a href="http://www.aidslifecycle.org/beneficiaries/sfaf.html">SF AIDS Foundation</a>.</p>
-    <p>Won't you <a href="/donate">help?</a></p>
+    <p>Hi! I'm Thomas, and I am riding across California to realize a dream and raise money for the 
+    <a href="http://www.sfaf.org/">SF AIDS Foundation</a> and <a href="http://www.lagaycenter.org/">LA Gay &amp; Lesbian Center.</a>
+
+    <p>Show your support with a <a href="/donate">donation.</a></p>
 
     <div id="progress">
       {{ExtractPageContent .Context "http://www.tofighthiv.org/site/TR/AIDSLIFECYCLE2014/AIDSLifeCycleCenter?px=2956163&pg=personal&fr_id=1630" "thermometerTall" "</td"}}
@@ -42,7 +45,9 @@
 
         {{ template "content" . }}
       </div>
-      <footer>Proudly powered by <a href="https://github.com/tstromberg/verbalize">verbalize</a> {{.Version}} and <a href="http://appspot.com/">Google AppEngine</a></footer>
+      <footer>
+      <a href="/feed">Syndication feed</a>&nbsp;|&nbsp;
+      Proudly powered by <a href="https://github.com/tstromberg/verbalize">verbalize</a> {{.Version}} and <a href="http://appspot.com/">Google AppEngine</a></footer>
   </div>
   {{ template "scripts" . }}
 
