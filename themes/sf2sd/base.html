@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>{{ .PageTitle }} - {{ .SiteTitle }}</title>
+  <title>{{ if .PageTitle }}{{ .PageTitle }} - {{ end }}{{ .SiteTitle }}</title>
   <meta charset="UTF-8">
   <link href='http://fonts.googleapis.com/css?family=Playfair+Display|Open+Sans:300italic,400,300,600,700,800|Merriweather:400,900,700,300' rel='stylesheet' type='text/css'>
   <link rel="stylesheet" href="/themes/{{.SiteTheme}}/style.css">
@@ -38,6 +38,9 @@
       <p>Days until <a href="http://www.aidslifecycle.org/">ALC 2014</a></p>
     </div>
 
+    <div id="logo">
+      <a href="http://www.aidslifecycle.org/"><img src="/themes/sf2sd/alc.png" alt="AIDS Lifecycle/2014"></a>
+    </div>
     </header>
 
     <div id="right">

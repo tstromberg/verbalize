@@ -73,7 +73,7 @@ type EntryContext struct {
 	Month          time.Month
 	MonthString    string
 	Year           int
-	Title          string
+	Title          template.HTML
 	Content        template.HTML
 	Excerpt        template.HTML
 	EscapedExcerpt string
@@ -100,7 +100,7 @@ func (e *Entry) Context() EntryContext {
 		MonthString:    e.PublishDate.Month().String(),
 		Year:           e.PublishDate.Year(),
 		RfcDate:        e.PublishDate.Format(time.RFC3339),
-		Title:          e.Title,
+		Title:          template.HTML(e.Title),
 		Content:        template.HTML(e.Content),
 		Excerpt:        template.HTML(excerpt),
 		EscapedExcerpt: string(excerpt),
@@ -112,9 +112,9 @@ func (e *Entry) Context() EntryContext {
 
 /* This is sent to all templates */
 type TemplateContext struct {
-	SiteTitle       string
-	SiteSubTitle    string
-	SiteDescription string
+	SiteTitle       template.HTML
+	SiteSubTitle    template.HTML
+	SiteDescription template.HTML
 	SiteTheme       string
 	BaseURL         template.HTML
 
@@ -279,10 +279,10 @@ func GetTemplateContext(entries []Entry, links []Link, pageTitle string,
 
 	t = TemplateContext{
 		BaseURL:               template.HTML(base_url),
-		SiteTitle:             config.Require("title"),
+		SiteTitle:             template.HTML(config.Require("title")),
 		SiteTheme:             config.Require("theme"),
-		SiteSubTitle:          config.Require("subtitle"),
-		SiteDescription:       config.Require("description"),
+		SiteSubTitle:          template.HTML(config.Require("subtitle")),
+		SiteDescription:       template.HTML(config.Require("description")),
 		Version:               VERSION,
 		PageTimeRfc3339:       time.Now().Format(time.RFC3339),
 		PageTimestamp:         time.Now().Unix() * 1000,
@@ -353,7 +353,7 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 	links, _ := GetLinks(c)
 
 	if r.URL.Path == "/" {
-		title = "Blog"
+		title = ""
 		template = *archiveTpl
 		entries, _ = GetEntries(c, EntryQuery{IsPage: false})
 	} else {
