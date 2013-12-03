@@ -353,7 +353,7 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 	links, _ := GetLinks(c)
 
 	if r.URL.Path == "/" {
-		title = ""
+		title = config.Require("subtitle")
 		template = *archiveTpl
 		entries, _ = GetEntries(c, EntryQuery{IsPage: false})
 	} else {
