@@ -490,6 +490,7 @@ func adminEditEntryHandler(w http.ResponseWriter, r *http.Request) {
 		entry := Entry{}
 		if is_page != "" {
 			entry.IsPage = true
+			entry.AllowComments = false
 		}
 		entries = append(entries, entry)
 	}
@@ -525,13 +526,21 @@ func adminSubmitEntryHandler(w http.ResponseWriter, r *http.Request) {
 		entry, _ = GetSingleEntry(c, slug)
 	}
 
-	entry.IsHidden, _ = strconv.ParseBool(r.FormValue("hidden"))
-	entry.AllowComments, _ = strconv.ParseBool(r.FormValue("allow_comments"))
+	if r.FormValue("hidden") == "on" {
+		entry.IsHidden = true
+	} else {
+		entry.IsHidden = false
+	}
+	if r.FormValue("allow_comments") == "on" {
+		entry.AllowComments = true
+	} else {
+		entry.AllowComments = false
+	}
 	entry.IsPage, _ = strconv.ParseBool(r.FormValue("is_page"))
 	entry.Content = []byte(content)
 	entry.Title = title
 	entry.Slug = slug
-
+	log.Printf("Comments: %s (real=%s)", entry.AllowComments, r.FormValue("allow_comments"))
 	if entry.PublishDate.IsZero() {
 		entry.PublishDate = time.Now()
 	}
