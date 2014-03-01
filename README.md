@@ -7,8 +7,8 @@ Features
 - [x] Ability to create arbitrary links
 - [x] Support for themes
 - [x] Ability to create arbitrary pages
+- [x] Page caching to avoid Datastore hits
 - [ ] Per-date archiving
-- [ ] Page caching to avoid Datastore hits
 
 
 Getting Started
