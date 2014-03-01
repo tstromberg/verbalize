@@ -26,7 +26,7 @@ import (
 const (
 	// Internal constants
 	CONFIG_PATH = "verbalize.yml"
-	VERSION     = "zero.20130922"
+	VERSION     = "zero.20140301"
 )
 
 // Entry struct, stored in Datastore.
