@@ -160,11 +160,6 @@ func DaysUntil(dateStr string) (days int, err error) {
 
 // ExtractPage extracts content from a given URL - used for templates.
 func ExtractPageContent(c appengine.Context, URL, start_token, end_token string) (content template.HTML, err error) {
-	timeout, err := strconv.Atoi(config.Require("external_page_cache_timeout"))
-	if err != nil {
-		return "", err
-	}
-
 	key := fmt.Sprintf("%s-%s-%s", URL, start_token, end_token)
 
 	if item, err := memcache.Get(c, key); err == memcache.ErrCacheMiss {
@@ -207,17 +202,8 @@ func ExtractPageContent(c appengine.Context, URL, start_token, end_token string)
 	}
 
 	extract := buffer.String()
-	c.Infof("Contents: %s", extract)
-	item := &memcache.Item{
-		Key:        key,
-		Value:      []byte(extract),
-		Expiration: time.Duration(timeout) * time.Second,
-	}
-	c.Infof("Caching extract of %s for %s", item.Key, item.Expiration)
-	if err := memcache.Add(c, item); err != nil {
-		c.Errorf("error adding %v to cache: %v", item, err)
-	}
-	return template.HTML(item.Value), nil
+	cacheOutput(c, key, []byte(extract), external_page_ttl)
+	return template.HTML(extract), nil
 }
 
 // load and configure set of templates
@@ -236,7 +222,9 @@ func loadTemplate(paths ...string) *template.Template {
 }
 
 var (
-	config = yaml.ConfigFile(CONFIG_PATH)
+	config               = yaml.ConfigFile(CONFIG_PATH)
+	external_page_ttl, _ = strconv.Atoi(config.Require("external_page_cache_ttl"))
+	page_ttl, _          = strconv.Atoi(config.Require("page_cache_ttl"))
 
 	theme_path      = filepath.Join("themes", config.Require("theme"))
 	base_theme_path = filepath.Join(theme_path, "base.html")
@@ -378,12 +366,6 @@ func GetLinks(c appengine.Context) (links []Link, err error) {
 // HTTP handler for rendering blog entries
 func rootHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
-	timeout, err := strconv.Atoi(config.Require("external_page_cache_timeout"))
-	if err != nil {
-		c.Errorf("Error: %v", err)
-		return
-	}
-
 	if item, err := memcache.Get(c, r.URL.Path); err == memcache.ErrCacheMiss {
 		c.Infof("Page %s not in the cache", r.URL.Path)
 	} else if err != nil {
@@ -426,27 +408,46 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 		c.Errorf("Error reading content from buffer: %v", err)
 	}
 	w.Write(content)
-
-	item := &memcache.Item{
-		Key:        r.URL.Path,
-		Value:      content,
-		Expiration: time.Duration(timeout) * time.Second,
-	}
-	c.Infof("Caching contents of %s for %s", item.Key, item.Expiration)
-	if err := memcache.Add(c, item); err != nil {
-		c.Errorf("error adding %v to cache: %v", item, err)
-	}
+	cacheOutput(c, r.URL.Path, content, page_ttl)
 }
 
 // HTTP handler for /feed
 func feedHandler(w http.ResponseWriter, r *http.Request) {
-	log.Printf("%v", r.URL)
 	c := appengine.NewContext(r)
+	if item, err := memcache.Get(c, r.URL.Path); err == memcache.ErrCacheMiss {
+		c.Infof("Page %s not in the cache", r.URL.Path)
+	} else if err != nil {
+		c.Errorf("error getting page: %v", err)
+	} else {
+		c.Infof("Page %s found in the cache", r.URL.Path)
+		w.Write(item.Value)
+		return
+	}
+
 	entries, _ := GetEntries(c, EntryQuery{IsPage: false})
 	links := make([]Link, 0)
 
 	context, _ := GetTemplateContext(entries, links, "Atom Feed", "feed", r)
-	feedTpl.ExecuteTemplate(w, "feed.html", context)
+	var contentBuffer bytes.Buffer
+	feedTpl.ExecuteTemplate(&contentBuffer, "feed.html", context)
+	content, _ := ioutil.ReadAll(&contentBuffer)
+	w.Write(content)
+	cacheOutput(c, r.URL.Path, content, page_ttl)
+}
+
+// Duplicated code for caching the output of something.
+func cacheOutput(c appengine.Context, key string, content []byte, ttl int) error {
+	item := &memcache.Item{
+		Key:        key,
+		Value:      content,
+		Expiration: time.Duration(ttl) * time.Second,
+	}
+	c.Infof("Caching contents of %s for %s", item.Key, item.Expiration)
+	err := memcache.Add(c, item)
+	if err != nil {
+		c.Errorf("error adding %v to cache: %v", item, err)
+	}
+	return err
 }
 
 // HTTP handler for /admin
@@ -491,6 +492,9 @@ func adminEditEntryHandler(w http.ResponseWriter, r *http.Request) {
 		if is_page != "" {
 			entry.IsPage = true
 			entry.AllowComments = false
+		} else {
+			entry.AllowComments = true
+			entry.IsPage = false
 		}
 		entries = append(entries, entry)
 	}

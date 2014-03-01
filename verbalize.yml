@@ -20,8 +20,11 @@ subdirectory: /
 
 entries_per_page: 10
 
+# How many seconds to cache page requests (flushes on edits)
+page_cache_ttl: 864000
+
 # How many seconds to cache external page requests
-external_page_cache_timeout: 12800
+external_page_cache_ttl: 12800
 
 # Note: <!--more--> is what wordpress uses. wymeditor removes comments,
 more_tag: <!--more-->

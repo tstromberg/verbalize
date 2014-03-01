@@ -31,9 +31,9 @@
         <input id="title" type="text" class="input-xlarge" name="title" value="{{.Title}}" placeholder="Title"/>
         <input id="slug" type="text" class="input-medium" name="slug" value="{{.Slug}}" placeholder="URL Slug"/>
         <label class="checkbox">
-          <input type="checkbox" name="hidden" {{ if .IsHidden }}checked{{ end }}>
+          <input type="checkbox" name="hidden"{{ if .IsHidden }} checked{{ end }}>
           Hide this {{ if .IsPage }}page{{ else }}post{{ end }}
-          <input type="checkbox" {{ if .AllowComments }}checked{{ end }} name="allow_comments">
+          <input type="checkbox"{{ if .AllowComments }} checked{{ end }} name="allow_comments">
           Allow Comments
         </label>
       </div>
