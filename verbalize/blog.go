@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"github.com/kylelemons/go-gypsy/yaml"
 	"html/template"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -164,44 +165,30 @@ func ExtractPageContent(c appengine.Context, URL, start_token, end_token string)
 		return "", err
 	}
 
-	var contents []byte
+	key := fmt.Sprintf("%s-%s-%s", URL, start_token, end_token)
 
-	if item, err := memcache.Get(c, URL); err == memcache.ErrCacheMiss {
-		c.Infof("%s not in the cache", URL)
-		client := urlfetch.Client(c)
-		resp, err := client.Get(URL)
-		if err != nil {
-			c.Errorf("error fetching %s: %v", URL, err)
-			return "", err
-		}
-		contents, err := ioutil.ReadAll(resp.Body)
-		resp.Body.Close()
-		if err != nil {
-			c.Infof("Error reading contents: %v", err)
-			return "", err
-		}
-
-		item := &memcache.Item{
-			Key:        URL,
-			Value:      contents,
-			Expiration: time.Duration(timeout) * time.Second,
-		}
-		if err := memcache.Add(c, item); err != nil {
-			c.Errorf("error adding %s to cache: %v", item, err)
-			return "", err
-		}
+	if item, err := memcache.Get(c, key); err == memcache.ErrCacheMiss {
+		c.Infof("URL %s not in the cache", URL)
 	} else if err != nil {
-		c.Errorf("error getting item: %v", err)
-		return "", err
+		c.Errorf("error getting URL: %v", err)
 	} else {
-		c.Infof("%s found in the cache", URL)
-		contents = item.Value
+		c.Infof("Returning cached contents of  %s", URL)
+		return template.HTML(item.Value), nil
 	}
-	reader := bytes.NewReader(contents)
-	scanner := bufio.NewScanner(reader)
+
+	c.Infof("Key %s not in the cache - fetching!", key)
+	client := urlfetch.Client(c)
+	resp, err := client.Get(URL)
+	if err != nil {
+		c.Errorf("error fetching %s: %v", URL, err)
+		return "", err
+	}
+	scanner := bufio.NewScanner(resp.Body)
+	defer resp.Body.Close()
 	inBlock := false
 	buffer := new(bytes.Buffer)
 
+	c.Infof("Scanning URL content for start=%s end=%s", start_token, end_token)
 	for scanner.Scan() {
 		// TODO(tstromberg): Use something that doesn't depend on newlines.
 		if strings.Contains(scanner.Text(), start_token) {
@@ -218,7 +205,19 @@ func ExtractPageContent(c appengine.Context, URL, start_token, end_token string)
 	if err := scanner.Err(); err != nil {
 		return "", err
 	}
-	return template.HTML(buffer.String()), nil
+
+	extract := buffer.String()
+	c.Infof("Contents: %s", extract)
+	item := &memcache.Item{
+		Key:        key,
+		Value:      []byte(extract),
+		Expiration: time.Duration(timeout) * time.Second,
+	}
+	c.Infof("Caching extract of %s for %s", item.Key, item.Expiration)
+	if err := memcache.Add(c, item); err != nil {
+		c.Errorf("error adding %v to cache: %v", item, err)
+	}
+	return template.HTML(item.Value), nil
 }
 
 // load and configure set of templates
@@ -278,12 +277,12 @@ func init() {
 }
 
 // Render a named template name to the HTTP channel
-func renderTemplate(w http.ResponseWriter, tmpl template.Template, context interface{}) {
+func renderTemplate(w io.Writer, tmpl template.Template, context interface{}) {
 	log.Printf("Rendering %s", tmpl.Name())
 	err := tmpl.ExecuteTemplate(w, "base.html", context)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		w.Write([]byte("Unable to render"))
 		return
 	}
 }
@@ -378,11 +377,26 @@ func GetLinks(c appengine.Context) (links []Link, err error) {
 
 // HTTP handler for rendering blog entries
 func rootHandler(w http.ResponseWriter, r *http.Request) {
+	c := appengine.NewContext(r)
+	timeout, err := strconv.Atoi(config.Require("external_page_cache_timeout"))
+	if err != nil {
+		c.Errorf("Error: %v", err)
+		return
+	}
+
+	if item, err := memcache.Get(c, r.URL.Path); err == memcache.ErrCacheMiss {
+		c.Infof("Page %s not in the cache", r.URL.Path)
+	} else if err != nil {
+		c.Errorf("error getting page: %v", err)
+	} else {
+		c.Infof("Page %s found in the cache", r.URL.Path)
+		w.Write(item.Value)
+		return
+	}
+
 	template := *errorTpl
 	title := "Error"
-
 	entries := make([]Entry, 0)
-	c := appengine.NewContext(r)
 	links, _ := GetLinks(c)
 
 	if r.URL.Path == "/" {
@@ -405,7 +419,23 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	context, _ := GetTemplateContext(entries, links, title, "root", r)
-	renderTemplate(w, template, context)
+	var contentBuffer bytes.Buffer
+	renderTemplate(&contentBuffer, template, context)
+	content, err := ioutil.ReadAll(&contentBuffer)
+	if err != nil {
+		c.Errorf("Error reading content from buffer: %v", err)
+	}
+	w.Write(content)
+
+	item := &memcache.Item{
+		Key:        r.URL.Path,
+		Value:      content,
+		Expiration: time.Duration(timeout) * time.Second,
+	}
+	c.Infof("Caching contents of %s for %s", item.Key, item.Expiration)
+	if err := memcache.Add(c, item); err != nil {
+		c.Errorf("error adding %v to cache: %v", item, err)
+	}
 }
 
 // HTTP handler for /feed
@@ -518,6 +548,7 @@ func adminSubmitEntryHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Printf("Saved entry: %v", entry)
+	memcache.Flush(c)
 	if entry.IsPage {
 		http.Redirect(w, r, fmt.Sprintf("/admin/pages?added=%s", slug), http.StatusFound)
 	} else {
@@ -546,6 +577,7 @@ func adminSubmitLinksHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Printf("Saved entry: %v", link)
+	memcache.Flush(c)
 	http.Redirect(w, r, fmt.Sprintf("/admin/links?added=%s", link.URL), http.StatusFound)
 }
 
