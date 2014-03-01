@@ -3,6 +3,7 @@ package blog
 import (
 	"appengine"
 	"appengine/datastore"
+	"appengine/memcache"
 	"appengine/urlfetch"
 	"appengine/user"
 	"bufio"
@@ -10,6 +11,7 @@ import (
 	"fmt"
 	"github.com/kylelemons/go-gypsy/yaml"
 	"html/template"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"path/filepath"
@@ -157,15 +159,46 @@ func DaysUntil(dateStr string) (days int, err error) {
 
 // ExtractPage extracts content from a given URL - used for templates.
 func ExtractPageContent(c appengine.Context, URL, start_token, end_token string) (content template.HTML, err error) {
-	client := urlfetch.Client(c)
-	resp, err := client.Get(URL)
-
+	timeout, err := strconv.Atoi(config.Require("external_page_cache_timeout"))
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
 
-	scanner := bufio.NewScanner(resp.Body)
+	var contents []byte
+
+	if item, err := memcache.Get(c, URL); err == memcache.ErrCacheMiss {
+		c.Infof("%s not in the cache", URL)
+		client := urlfetch.Client(c)
+		resp, err := client.Get(URL)
+		if err != nil {
+			c.Errorf("error fetching %s: %v", URL, err)
+			return "", err
+		}
+		contents, err := ioutil.ReadAll(resp.Body)
+		resp.Body.Close()
+		if err != nil {
+			c.Infof("Error reading contents: %v", err)
+			return "", err
+		}
+
+		item := &memcache.Item{
+			Key:        URL,
+			Value:      contents,
+			Expiration: time.Duration(timeout) * time.Second,
+		}
+		if err := memcache.Add(c, item); err != nil {
+			c.Errorf("error adding %s to cache: %v", item, err)
+			return "", err
+		}
+	} else if err != nil {
+		c.Errorf("error getting item: %v", err)
+		return "", err
+	} else {
+		c.Infof("%s found in the cache", URL)
+		contents = item.Value
+	}
+	reader := bytes.NewReader(contents)
+	scanner := bufio.NewScanner(reader)
 	inBlock := false
 	buffer := new(bytes.Buffer)
 
