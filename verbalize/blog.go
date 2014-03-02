@@ -408,7 +408,8 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 		c.Errorf("Error reading content from buffer: %v", err)
 	}
 	w.Write(content)
-	cacheOutput(c, r.URL.Path, content, page_ttl)
+	w.Header().Set("Cache-control", "public, max-age=7200")
+	go cacheOutput(c, r.URL.Path, content, page_ttl)
 }
 
 // HTTP handler for /feed
@@ -432,6 +433,7 @@ func feedHandler(w http.ResponseWriter, r *http.Request) {
 	feedTpl.ExecuteTemplate(&contentBuffer, "feed.html", context)
 	content, _ := ioutil.ReadAll(&contentBuffer)
 	w.Write(content)
+	w.Header().Set("Cache-control", "public, max-age=7200")
 	cacheOutput(c, r.URL.Path, content, page_ttl)
 }
 
