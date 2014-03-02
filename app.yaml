@@ -2,6 +2,7 @@ application: tstromberg-sf2sd
 version: 1
 runtime: go
 api_version: go1
+default_expiration: "7d"
 
 handlers:
 - url: /third_party
@@ -10,6 +11,7 @@ handlers:
 - url: /themes/(.*)/(.*\.(gif|png|jpg|css))
   static_files: themes/\1/\2
   upload: themes/(.*\.(gif|png|jpg|css))
+  expiration: "1d"
 
 - url: /.*images/(.*\.(gif|png|jpg))
   static_files: images/\1
