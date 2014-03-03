@@ -202,7 +202,7 @@ func ExtractPageContent(c appengine.Context, URL, start_token, end_token string)
 	}
 
 	extract := buffer.String()
-	cacheOutput(c, key, []byte(extract), external_page_ttl)
+	storeInCache(c, key, []byte(extract), external_page_ttl)
 	return template.HTML(extract), nil
 }
 
@@ -365,13 +365,17 @@ func GetLinks(c appengine.Context) (links []Link, err error) {
 
 // HTTP handler for rendering blog entries
 func rootHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-control", "public, max-age=7200")
+
 	c := appengine.NewContext(r)
-	if item, err := memcache.Get(c, r.URL.Path); err == memcache.ErrCacheMiss {
-		c.Infof("Page %s not in the cache", r.URL.Path)
+	key := r.URL.Path + "@" + appengine.VersionID(c)
+
+	if item, err := memcache.Get(c, key); err == memcache.ErrCacheMiss {
+		c.Infof("Page %s not in the cache", key)
 	} else if err != nil {
 		c.Errorf("error getting page: %v", err)
 	} else {
-		c.Infof("Page %s found in the cache", r.URL.Path)
+		c.Infof("Page %s found in the cache", key)
 		w.Write(item.Value)
 		return
 	}
@@ -408,19 +412,22 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 		c.Errorf("Error reading content from buffer: %v", err)
 	}
 	w.Write(content)
-	w.Header().Set("Cache-control", "public, max-age=7200")
-	go cacheOutput(c, r.URL.Path, content, page_ttl)
+	go storeInCache(c, r.URL.Path, content, page_ttl)
 }
 
 // HTTP handler for /feed
 func feedHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-control", "public, max-age=7200")
+
 	c := appengine.NewContext(r)
-	if item, err := memcache.Get(c, r.URL.Path); err == memcache.ErrCacheMiss {
-		c.Infof("Page %s not in the cache", r.URL.Path)
+	key := r.URL.Path + "@" + appengine.VersionID(c)
+
+	if item, err := memcache.Get(c, key); err == memcache.ErrCacheMiss {
+		c.Infof("Page %s not in the cache", key)
 	} else if err != nil {
 		c.Errorf("error getting page: %v", err)
 	} else {
-		c.Infof("Page %s found in the cache", r.URL.Path)
+		c.Infof("Page %s found in the cache", key)
 		w.Write(item.Value)
 		return
 	}
@@ -432,13 +439,13 @@ func feedHandler(w http.ResponseWriter, r *http.Request) {
 	var contentBuffer bytes.Buffer
 	feedTpl.ExecuteTemplate(&contentBuffer, "feed.html", context)
 	content, _ := ioutil.ReadAll(&contentBuffer)
+
 	w.Write(content)
-	w.Header().Set("Cache-control", "public, max-age=7200")
-	cacheOutput(c, r.URL.Path, content, page_ttl)
+	storeInCache(c, key, content, page_ttl)
 }
 
-// Duplicated code for caching the output of something.
-func cacheOutput(c appengine.Context, key string, content []byte, ttl int) error {
+// Store content in memcache, logging and discarding errors.
+func storeInCache(c appengine.Context, key string, content []byte, ttl int) error {
 	item := &memcache.Item{
 		Key:        key,
 		Value:      content,
