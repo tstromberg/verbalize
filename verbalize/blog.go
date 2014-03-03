@@ -225,6 +225,7 @@ var (
 	config               = yaml.ConfigFile(CONFIG_PATH)
 	external_page_ttl, _ = strconv.Atoi(config.Require("external_page_cache_ttl"))
 	page_ttl, _          = strconv.Atoi(config.Require("page_cache_ttl"))
+	cache_control_header = config.Require("cache_control_header")
 
 	theme_path      = filepath.Join("themes", config.Require("theme"))
 	base_theme_path = filepath.Join(theme_path, "base.html")
@@ -365,7 +366,7 @@ func GetLinks(c appengine.Context) (links []Link, err error) {
 
 // HTTP handler for rendering blog entries
 func rootHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Cache-control", "public, max-age=7200")
+	w.Header().Set("Cache-control", cache_control_header)
 
 	c := appengine.NewContext(r)
 	key := r.URL.Path + "@" + appengine.VersionID(c)
@@ -417,7 +418,7 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 
 // HTTP handler for /feed
 func feedHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Cache-control", "public, max-age=7200")
+	w.Header().Set("Cache-control", cache_control_header)
 
 	c := appengine.NewContext(r)
 	key := r.URL.Path + "@" + appengine.VersionID(c)
