@@ -1,7 +1,22 @@
+// Copyright 2013 Google, Inc.  All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package yaml
 
 import (
 	"bytes"
+	"strings"
 	"testing"
 )
 
@@ -12,6 +27,18 @@ var parseTests = []struct {
 	{
 		Input:  "key1: val1\n",
 		Output: "key1: val1\n",
+	},
+	{
+		Input:  "key2 : val1\n",
+		Output: "key2: val1\n",
+	},
+	{
+		Input:  "key3:val1\n",
+		Output: "key3:val1\n",
+	},
+	{
+		Input:  "key4 :val1\n",
+		Output: "key4 :val1\n",
 	},
 	{
 		Input: "key: nest: val\n",
@@ -186,6 +213,21 @@ func TestGetType(t *testing.T) {
 			want0, want1 := test.Value[:want], test.Value[want:]
 			t.Errorf("%d. split is %s|%s, want %s|%s", idx,
 				got0, got1, want0, want1)
+		}
+	}
+}
+
+func Test_MultiLineString(t *testing.T) {
+	buf := bytes.NewBufferString("a : |\n  a\n  b\n\nc : d")
+	node, err := Parse(buf)
+	if err != nil {
+		t.Error(err)
+	} else {
+		m := node.(Map)
+		v := m["a"].(Scalar)
+		v2 := strings.TrimSpace(string(v))
+		if v2 != "a\nb" {
+			t.Errorf("multi line parsed wrong thing: %v", v)
 		}
 	}
 }
