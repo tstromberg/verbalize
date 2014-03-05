@@ -29,40 +29,7 @@ const (
 	VERSION     = "zero.20140301"
 )
 
-// Entry struct, stored in Datastore.
-type Entry struct {
-	Author   string
-	IsHidden bool
-	// Is this a page, or a blog entry?
-	IsPage        bool
-	AllowComments bool
-	PublishDate   time.Time
-	Title         string
-	Content       []byte
-	Slug          string
-	RelativeURL   string
-	// Compatibility
-	RelativeUrl string
-}
-
-/* return a fetching key for a given entry */
-func (e *Entry) Key(c appengine.Context) *datastore.Key {
-	return datastore.NewKey(c, "Entries", e.Slug, 0, nil)
-}
-
-// Link struct, stored in Datastore.
-type Link struct {
-	Title string
-	URL   string
-	Order int64
-}
-
-/* return a fetching key for a given entry */
-func (l *Link) Key(c appengine.Context) *datastore.Key {
-	return datastore.NewKey(c, "Links", l.URL, 0, nil)
-}
-
-/* a mirror of Entry, with markings for raw HTML encoding. */
+/* All of the information we need to send about an entry to the template */
 type EntryContext struct {
 	Author         string
 	IsHidden       bool
@@ -85,36 +52,66 @@ type EntryContext struct {
 	Slug           string
 }
 
+// Entry struct, stored in Datastore.
+type SavedEntry struct {
+	Author        string
+	IsHidden      bool
+	IsPage        bool
+	AllowComments bool
+	PublishDate   time.Time
+	Title         string
+	Content       []byte
+	Slug          string
+	RelativeURL   string
+}
+
+/* return a fetching key for a given entry */
+func (s *SavedEntry) Key(c appengine.Context) *datastore.Key {
+	return datastore.NewKey(c, "Entries", s.Slug, 0, nil)
+}
+
 /* Entry.Context() generates template data from a stored entry */
-func (e *Entry) Context() EntryContext {
-	excerpt := bytes.SplitN(e.Content, []byte(config.Require("more_tag")),
+func (s *SavedEntry) Context() EntryContext {
+	excerpt := bytes.SplitN(s.Content, []byte(config.Require("more_tag")),
 		2)[0]
 
 	return EntryContext{
-		Author:         e.Author,
-		IsHidden:       e.IsHidden,
-		IsPage:         e.IsPage,
-		AllowComments:  e.AllowComments,
-		Timestamp:      e.PublishDate.UTC().Unix(),
-		Day:            e.PublishDate.Day(),
-		Hour:           e.PublishDate.Hour(),
-		Minute:         e.PublishDate.Minute(),
-		Month:          e.PublishDate.Month(),
-		MonthString:    e.PublishDate.Month().String(),
-		Year:           e.PublishDate.Year(),
-		RfcDate:        e.PublishDate.Format(time.RFC3339),
-		Title:          template.HTML(e.Title),
-		Content:        template.HTML(e.Content),
+		Author:         s.Author,
+		IsHidden:       s.IsHidden,
+		IsPage:         s.IsPage,
+		AllowComments:  s.AllowComments,
+		Timestamp:      s.PublishDate.UTC().Unix(),
+		Day:            s.PublishDate.Day(),
+		Hour:           s.PublishDate.Hour(),
+		Minute:         s.PublishDate.Minute(),
+		Month:          s.PublishDate.Month(),
+		MonthString:    s.PublishDate.Month().String(),
+		Year:           s.PublishDate.Year(),
+		RfcDate:        s.PublishDate.Format(time.RFC3339),
+		Title:          template.HTML(s.Title),
+		Content:        template.HTML(s.Content),
 		Excerpt:        template.HTML(excerpt),
 		EscapedExcerpt: string(excerpt),
-		IsExcerpted:    len(e.Content) != len(excerpt),
-		RelativeURL:    e.RelativeURL,
-		Slug:           e.Slug,
+		IsExcerpted:    len(s.Content) != len(excerpt),
+		RelativeURL:    s.RelativeURL,
+		Slug:           s.Slug,
 	}
 }
 
+// Link struct, stored in Datastore.
+type SavedLink struct {
+	Title string
+	URL   string
+	Order int64
+}
+
+/* return a fetching key for a given entry */
+func (sl *SavedLink) Key(c appengine.Context) *datastore.Key {
+	return datastore.NewKey(c, "Links", sl.URL, 0, nil)
+}
+
 /* This is sent to all templates */
-type TemplateContext struct {
+type GlobalTemplateContext struct {
 	SiteTitle       template.HTML
 	SiteSubTitle    template.HTML
 	SiteDescription template.HTML
@@ -129,7 +126,7 @@ type TemplateContext struct {
 	PageTimeRfc3339 string
 	PageTimestamp   int64
 	Entries         []EntryContext
-	Links           []Link
+	Links           []SavedLink
 
 	DisqusId              string
 	GoogleAnalyticsId     string
@@ -272,9 +269,7 @@ func renderTemplate(w io.Writer, tmpl template.Template, context interface{}) {
 	}
 }
 
-func GetTemplateContext(entries []Entry, links []Link, pageTitle string,
-	pageId string, r *http.Request) (
-	t TemplateContext, err error) {
+func GetTemplateContext(entries []SavedEntry, links []SavedLink, pageTitle string, pageId string, r *http.Request) (t GlobalTemplateContext, err error) {
 	entry_contexts := make([]EntryContext, 0, len(entries))
 	for _, entry := range entries {
 		entry_contexts = append(entry_contexts, entry.Context())
@@ -294,7 +289,7 @@ func GetTemplateContext(entries []Entry, links []Link, pageTitle string,
 
 	c := appengine.NewContext(r)
 
-	t = TemplateContext{
+	t = GlobalTemplateContext{
 		BaseURL:               template.HTML(base_url),
 		SiteTitle:             template.HTML(config.Require("title")),
 		SiteTheme:             config.Require("theme"),
@@ -316,7 +311,7 @@ func GetTemplateContext(entries []Entry, links []Link, pageTitle string,
 }
 
 // GetEntries retrieves all or some blog entries from datastore
-func GetEntries(c appengine.Context, params EntryQuery) (entries []Entry, err error) {
+func GetEntries(c appengine.Context, params EntryQuery) (entries []SavedEntry, err error) {
 	if params.Count == 0 {
 		count, _ := config.GetInt("entries_per_page")
 		params.Count = int(count)
@@ -344,22 +339,20 @@ func GetEntries(c appengine.Context, params EntryQuery) (entries []Entry, err er
 	}
 	log.Printf("Query: %v", q)
 
-	entries = make([]Entry, 0, params.Count)
 	_, err = q.GetAll(c, &entries)
 	return entries, err
 }
 
 // GetSingleEntry retrieves a single blog entry by slug from datastore
-func GetSingleEntry(c appengine.Context, slug string) (e Entry, err error) {
+func GetSingleEntry(c appengine.Context, slug string) (e SavedEntry, err error) {
 	e.Slug = slug
 	err = datastore.Get(c, e.Key(c), &e)
 	return
 }
 
 // GetLinks retrieves all links in order from datastore
-func GetLinks(c appengine.Context) (links []Link, err error) {
+func GetLinks(c appengine.Context) (links []SavedLink, err error) {
 	q := datastore.NewQuery("Links").Order("Order").Order("Title")
-	links = make([]Link, 0)
 	_, err = q.GetAll(c, &links)
 	return links, err
 }
@@ -383,7 +376,7 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 
 	template := *errorTpl
 	title := "Error"
-	entries := make([]Entry, 0)
+	var entries []SavedEntry
 	links, _ := GetLinks(c)
 	path := r.URL.Path
 
@@ -445,7 +438,7 @@ func feedHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	entries, _ := GetEntries(c, EntryQuery{IsPage: false})
-	links := make([]Link, 0)
+	links := make([]SavedLink, 0)
 
 	context, _ := GetTemplateContext(entries, links, "Atom Feed", "feed", r)
 	var contentBuffer bytes.Buffer
@@ -498,7 +491,7 @@ func adminEditEntryHandler(w http.ResponseWriter, r *http.Request) {
 
 	// just defaults.
 	title := "New"
-	entries := make([]Entry, 0)
+	var entries []SavedEntry
 
 	if slug != "" {
 		entry, err := GetSingleEntry(c, slug)
@@ -510,7 +503,7 @@ func adminEditEntryHandler(w http.ResponseWriter, r *http.Request) {
 		entries = append(entries, entry)
 		title = entry.Title
 	} else {
-		entry := Entry{}
+		entry := SavedEntry{}
 		if is_page != "" {
 			entry.IsPage = true
 			entry.AllowComments = false
@@ -531,7 +524,7 @@ func adminSubmitEntryHandler(w http.ResponseWriter, r *http.Request) {
 	content := strings.TrimSpace(r.FormValue("content"))
 	title := strings.TrimSpace(r.FormValue("title"))
 	slug := strings.TrimSpace(r.FormValue("slug"))
-	entry := Entry{}
+	entry := SavedEntry{}
 
 	if len(content) == 0 {
 		http.Error(w, "No content", http.StatusInternalServerError)
@@ -601,7 +594,7 @@ func adminLinksHandler(w http.ResponseWriter, r *http.Request) {
 func adminSubmitLinksHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 	order, _ := strconv.Atoi(strings.TrimSpace(r.FormValue("new_order")))
-	link := Link{
+	link := SavedLink{
 		Order: int64(order),
 		Title: strings.TrimSpace(r.FormValue("new_title")),
 		URL:   strings.TrimSpace(r.FormValue("new_url")),
