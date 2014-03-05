@@ -13,6 +13,16 @@ handlers:
   upload: themes/(.*\.(gif|png|jpg|css))
   expiration: "1d"
 
+- url: /robots.txt
+  static_files: static/robots.txt
+  upload: static/robots.txt
+  expiration: "1d"
+
+- url: /favicon.ico
+  static_files: static/favicon.ico
+  upload: static/favicon.ico
+  expiration: "1d"
+
 - url: /.*images/(.*\.(gif|png|jpg))
   static_files: images/\1
   upload: images/(.*\.(gif|png|jpg))
