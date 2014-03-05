@@ -145,6 +145,7 @@ type EntryQuery struct {
 	IncludeHidden bool
 	IsPage        bool
 	Tag           string // unused
+	Offset        int
 }
 
 // DaysUntil returns the number of days until a date - used for templates.
@@ -342,6 +343,9 @@ func GetEntries(c appengine.Context, params EntryQuery) (entries []Entry, err er
 	if params.IncludeHidden == false {
 		q = q.Filter("IsHidden = ", false)
 	}
+	if params.Offset > 0 {
+		q = q.Offset(params.Offset)
+	}
 	log.Printf("Query: %v", q)
 
 	entries = make([]Entry, 0, params.Count)
@@ -385,11 +389,21 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 	title := "Error"
 	entries := make([]Entry, 0)
 	links, _ := GetLinks(c)
+	path := r.URL.Path
 
-	if r.URL.Path == "/" {
+	pageCount, _ := strconv.Atoi(filepath.Base(r.URL.Path))
+	c.Infof("Page count: %d for %s", pageCount, r.URL.Path)
+	if pageCount > 0 {
+		path = filepath.Dir(path)
+	} else {
+		pageCount = 0
+	}
+
+	if path == "/" {
 		title = config.Require("subtitle")
 		template = *archiveTpl
-		entries, _ = GetEntries(c, EntryQuery{IsPage: false})
+		per_page, _ := config.GetInt("entries_per_page")
+		entries, _ = GetEntries(c, EntryQuery{IsPage: false, Offset: int(per_page) * (pageCount - 1)})
 	} else {
 		entry, err := GetSingleEntry(c, filepath.Base(r.URL.Path))
 		if err != nil {

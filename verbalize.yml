@@ -18,10 +18,10 @@ google_analytics_domain: sf2sd.org
 # Where is this application serving from?
 subdirectory: /
 
-entries_per_page: 10
+entries_per_page: 5
 
 # How many seconds to store pages in memcache (flushes on edit)
-page_cache_ttl: 864000
+page_cache_ttl: 12800
 
 # How many seconds to store external pages in memcache (flushes on edit)
 external_page_cache_ttl: 12800
