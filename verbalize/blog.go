@@ -203,7 +203,8 @@ func ExtractPageContent(c appengine.Context, URL, start_token, end_token string)
 	}
 
 	extract := buffer.String()
-	storeInCache(c, key, []byte(extract), external_page_ttl)
+	external_page_ttl, _ := config.GetInt("external_page_cache_ttl")
+	storeInCache(c, key, []byte(extract), int(external_page_ttl))
 	return template.HTML(extract), nil
 }
 
@@ -223,22 +224,16 @@ func loadTemplate(paths ...string) *template.Template {
 }
 
 var (
-	config               = yaml.ConfigFile(CONFIG_PATH)
-	external_page_ttl, _ = strconv.Atoi(config.Require("external_page_cache_ttl"))
-	page_ttl, _          = strconv.Atoi(config.Require("page_cache_ttl"))
-	cache_control_header = config.Require("cache_control_header")
+	config = yaml.ConfigFile(CONFIG_PATH)
 
 	theme_path      = filepath.Join("themes", config.Require("theme"))
 	base_theme_path = filepath.Join(theme_path, "base.html")
 
-	archiveTpl = loadTemplate(base_theme_path, filepath.Join(theme_path, "archive.html"))
-	entryTpl   = loadTemplate(base_theme_path, filepath.Join(theme_path, "entry.html"))
-	pageTpl    = loadTemplate(base_theme_path, filepath.Join(theme_path, "page.html"))
-
-	errorTpl = loadTemplate(base_theme_path, "templates/error.html")
-
-	feedTpl = loadTemplate("templates/feed.html")
-
+	archiveTpl       = loadTemplate(base_theme_path, filepath.Join(theme_path, "archive.html"))
+	entryTpl         = loadTemplate(base_theme_path, filepath.Join(theme_path, "entry.html"))
+	pageTpl          = loadTemplate(base_theme_path, filepath.Join(theme_path, "page.html"))
+	errorTpl         = loadTemplate(base_theme_path, "templates/error.html")
+	feedTpl          = loadTemplate("templates/feed.html")
 	adminEditTpl     = loadTemplate("templates/admin/base.html", "templates/admin/edit.html")
 	adminHomeTpl     = loadTemplate("templates/admin/base.html", "templates/admin/home.html")
 	adminPagesTpl    = loadTemplate("templates/admin/base.html", "templates/admin/pages.html")
@@ -323,7 +318,8 @@ func GetTemplateContext(entries []Entry, links []Link, pageTitle string,
 // GetEntries retrieves all or some blog entries from datastore
 func GetEntries(c appengine.Context, params EntryQuery) (entries []Entry, err error) {
 	if params.Count == 0 {
-		params.Count, _ = strconv.Atoi(config.Require("entries_per_page"))
+		count, _ := config.GetInt("entries_per_page")
+		params.Count = int(count)
 	}
 	q := datastore.NewQuery("Entries").Order(
 		"-PublishDate").Limit(params.Count)
@@ -370,7 +366,7 @@ func GetLinks(c appengine.Context) (links []Link, err error) {
 
 // HTTP handler for rendering blog entries
 func rootHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Cache-control", cache_control_header)
+	w.Header().Set("Cache-control", config.Require("cache_control_header"))
 
 	c := appengine.NewContext(r)
 	key := r.URL.Path + "@" + appengine.VersionID(c)
@@ -427,12 +423,13 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 		c.Errorf("Error reading content from buffer: %v", err)
 	}
 	w.Write(content)
-	storeInCache(c, key, content, page_ttl)
+	page_ttl, _ := config.GetInt("page_cache_ttl")
+	storeInCache(c, key, content, int(page_ttl))
 }
 
 // HTTP handler for /feed
 func feedHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Cache-control", cache_control_header)
+	w.Header().Set("Cache-control", config.Require("cache_control_header"))
 
 	c := appengine.NewContext(r)
 	key := r.URL.Path + "@" + appengine.VersionID(c)
@@ -456,7 +453,8 @@ func feedHandler(w http.ResponseWriter, r *http.Request) {
 	content, _ := ioutil.ReadAll(&contentBuffer)
 
 	w.Write(content)
-	storeInCache(c, key, content, page_ttl)
+	page_ttl, _ := config.GetInt("page_cache_ttl")
+	storeInCache(c, key, content, int(page_ttl))
 }
 
 // Store content in memcache, logging and discarding errors.
