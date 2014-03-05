@@ -413,7 +413,7 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 		c.Errorf("Error reading content from buffer: %v", err)
 	}
 	w.Write(content)
-	go storeInCache(c, r.URL.Path, content, page_ttl)
+	storeInCache(c, key, content, page_ttl)
 }
 
 // HTTP handler for /feed
