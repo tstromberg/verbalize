@@ -77,6 +77,8 @@ type SavedEntry struct {
 	Content       []byte
 	Slug          string
 	RelativeURL   string
+	// Unused: I haven't figured out how to delete this field from my tables yet.
+	RelativeUrl string
 }
 
 /* return a fetching key for a given entry */
