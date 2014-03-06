@@ -25,6 +25,7 @@
 {{ end }}
 
 {{ define "content" }}
+  <!-- entry.html content -->
   {{ range .Entries }}
           <article>
             <header>
@@ -45,10 +46,11 @@
               </section>
             {{ end }}
           </article>
-
-
   {{ end }}
-
   <noscript>Please enable JavaScript to comments</noscript>
+
+PREVIOUS: {{ .PreviousURL }}
+NEXT: {{ .NextURL }}
+  <!-- end: entry.html content -->
 {{ end }}
 

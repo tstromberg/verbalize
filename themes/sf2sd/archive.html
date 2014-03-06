@@ -24,6 +24,7 @@
 {{ end }}
 
 {{ define "content" }}
+  <!-- archive.html content -->
   {{ range .Entries }}
           <article>
           <header>
@@ -43,4 +44,11 @@
             </section>
           </article>
   {{ end }}
+
+  <div id="previous_next">
+    <div id="next">{{ if .NextURL }}<a href="{{ .NextURL }}">&larr; Older Posts</a>{{ end }}</div>
+    <div id="previous">{{ if .PreviousURL }}<a href="{{ .PreviousURL }}">Newer Posts &rarr;</a>{{ end }}</div>
+  </div>
+  <!-- end archive.html content -->
 {{ end }}
+

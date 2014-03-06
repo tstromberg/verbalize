@@ -21,7 +21,7 @@ subdirectory: /
 entries_per_page: 5
 
 # How many seconds to store pages in memcache (flushes on edit)
-page_cache_ttl: 12800
+page_cache_ttl: 1
 
 # How many seconds to store external pages in memcache (flushes on edit)
 external_page_cache_ttl: 12800

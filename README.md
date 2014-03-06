@@ -8,7 +8,11 @@ Features
 - [x] Support for themes
 - [x] Ability to create arbitrary pages
 - [x] Page caching to avoid Datastore hits
-- [ ] Per-date archiving
+- [x] Per-date archiving
+
+Coming next:
+============
+- [ ] Autosave of drafts
 
 
 Getting Started

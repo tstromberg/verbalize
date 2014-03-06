@@ -52,23 +52,46 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 
 	template := *errorTpl
 	title := "Error"
+	nextURL := ""
+	previousURL := ""
+
 	var entries []SavedEntry
 	links, _ := GetLinks(c)
 	path := r.URL.Path
 
 	pageCount, _ := strconv.Atoi(filepath.Base(r.URL.Path))
 	c.Infof("Page count: %d for %s", pageCount, r.URL.Path)
-	if pageCount > 0 {
+	if pageCount > 1 {
 		path = filepath.Dir(path)
+		if pageCount > 2 {
+			previousURL = fmt.Sprintf("%s%d", path, pageCount-1)
+		} else {
+			// Don't link to /1, just link to the base path.
+			previousURL = path
+		}
 	} else {
-		pageCount = 0
+		pageCount = 1
 	}
 
 	if path == "/" {
 		title = config.Require("subtitle")
 		template = *archiveTpl
-		per_page, _ := config.GetInt("entries_per_page")
-		entries, _ = GetEntries(c, EntryQuery{IsPage: false, Offset: int(per_page) * (pageCount - 1)})
+		entries_per_page, _ := config.GetInt("entries_per_page")
+		offset := int(entries_per_page) * (pageCount - 1)
+		c.Infof("Page %d - Entries Per page: %d - Offset: %d", pageCount, entries_per_page, offset)
+		query := EntryQuery{
+			IsPage: false,
+			// We ask for 1 more than required so that we know if there are more links to show.
+			Count:  int(entries_per_page) + 1,
+			Offset: offset,
+		}
+		entries, _ = GetEntries(c, query)
+
+		if len(entries) > int(entries_per_page) {
+			nextURL = fmt.Sprintf("%s%d", path, pageCount+1)
+			entries = entries[:entries_per_page]
+		}
+
 	} else {
 		entry, err := GetSingleEntry(c, filepath.Base(r.URL.Path))
 		if err != nil {
@@ -85,6 +108,9 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	context, _ := GetTemplateContext(entries, links, title, "root", r)
+	context.PreviousURL = previousURL
+	context.NextURL = nextURL
+
 	var contentBuffer bytes.Buffer
 	renderTemplate(&contentBuffer, template, context)
 	content, err := ioutil.ReadAll(&contentBuffer)
@@ -113,7 +139,8 @@ func feedHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	entries, _ := GetEntries(c, EntryQuery{IsPage: false})
+	entry_count, _ := config.GetInt("entries_per_page")
+	entries, _ := GetEntries(c, EntryQuery{IsPage: false, Count: int(entry_count)})
 	links := make([]SavedLink, 0)
 
 	context, _ := GetTemplateContext(entries, links, "Atom Feed", "feed", r)
