@@ -10,10 +10,9 @@ Features
 - [x] Page caching to avoid Datastore hits
 - [x] Per-date archiving
 
-Coming next:
-============
-- [ ] Autosave of drafts
-
+Missing Features
+================
+- [x] Auto-save of drafts
 
 Getting Started
 ===============
