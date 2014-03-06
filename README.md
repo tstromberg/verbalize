@@ -1,18 +1,17 @@
 Features
 ========
-- [x] Intense performance.
-- [x] Runs on Google AppEngine
-- [x] WYSWIG editing of blog posts
-- [x] Disqus integration
-- [x] Ability to create arbitrary links
-- [x] Support for themes
-- [x] Ability to create arbitrary pages
-- [x] Page caching to avoid Datastore hits
-- [x] Per-date archiving
+- Runs on Google AppEngine, and is efficient enough to run within free quota
+- Designed for high-performance, availability, and scalability
+- Utilizes in-memory caching for all page loads
+- WYSWIG editing of blog posts
+- Disqus-powered comment system
+- Able to create arbitrary pages and links
+- Basic support for themes
+- Able to extract, cache, and redisplay contents from other websites
 
 Missing Features
 ================
-- [x] Auto-save of drafts
+- Auto-save of drafts
 
 Getting Started
 ===============
