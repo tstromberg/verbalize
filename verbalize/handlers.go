@@ -153,21 +153,6 @@ func feedHandler(w http.ResponseWriter, r *http.Request) {
 	storeInCache(c, key, content, int(page_ttl))
 }
 
-// Store content in memcache, logging and discarding errors.
-func storeInCache(c appengine.Context, key string, content []byte, ttl int) error {
-	item := &memcache.Item{
-		Key:        key,
-		Value:      content,
-		Expiration: time.Duration(ttl) * time.Second,
-	}
-	c.Infof("Caching contents of %s for %s", item.Key, item.Expiration)
-	err := memcache.Add(c, item)
-	if err != nil {
-		c.Errorf("error adding %v to cache: %v", item, err)
-	}
-	return err
-}
-
 // HTTP handler for /admin
 func adminHomeHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)

@@ -3,6 +3,7 @@ package blog
 import (
 	"appengine"
 	"appengine/datastore"
+	"appengine/memcache"
 	"bytes"
 	"github.com/kylelemons/go-gypsy/yaml"
 	"html/template"
@@ -278,4 +279,23 @@ func GetLinks(c appengine.Context) (links []SavedLink, err error) {
 	q := datastore.NewQuery("Links").Order("Order").Order("Title")
 	_, err = q.GetAll(c, &links)
 	return links, err
+}
+
+// Store content in memcache, logging and discarding errors.
+func storeInCache(c appengine.Context, key string, content []byte, ttl int) error {
+	if appengine.IsDevAppServer() {
+		c.Infof("This is a dev appserver, ignoring TTL of %d", ttl)
+		ttl = 1
+	}
+	item := &memcache.Item{
+		Key:        key,
+		Value:      content,
+		Expiration: time.Duration(ttl) * time.Second,
+	}
+	c.Infof("Caching contents of %s for %s", item.Key, item.Expiration)
+	err := memcache.Add(c, item)
+	if err != nil {
+		c.Errorf("error adding %v to cache: %v", item, err)
+	}
+	return err
 }
