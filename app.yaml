@@ -11,21 +11,22 @@ handlers:
 - url: /themes/(.*)/(.*\.(gif|png|jpg|css))
   static_files: themes/\1/\2
   upload: themes/(.*\.(gif|png|jpg|css))
-  expiration: "1d"
+  expiration: "2d"
 
 - url: /robots.txt
   static_files: static/robots.txt
   upload: static/robots.txt
-  expiration: "1d"
+  expiration: "30d"
 
 - url: /favicon.ico
   static_files: static/favicon.ico
   upload: static/favicon.ico
-  expiration: "1d"
+  expiration: "30d"
 
 - url: /.*images/(.*\.(gif|png|jpg))
   static_files: images/\1
   upload: images/(.*\.(gif|png|jpg))
+  expiration: "7d"
 
 - url: /admin/.*
   script: _go_app
