@@ -149,8 +149,8 @@ func feedHandler(w http.ResponseWriter, r *http.Request) {
 	content, _ := ioutil.ReadAll(&contentBuffer)
 
 	w.Write(content)
-	page_ttl, _ := config.GetInt("page_cache_ttl")
-	storeInCache(c, key, content, int(page_ttl))
+	// Feeds get cached infinitely, until an edit flushes it.
+	storeInCache(c, key, content, 0)
 }
 
 // HTTP handler for /admin
