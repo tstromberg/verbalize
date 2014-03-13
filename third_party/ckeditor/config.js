@@ -38,4 +38,6 @@ CKEDITOR.editorConfig = function( config ) {
 
         // enable autosave.
         config.extraPlugins = 'autosave';
+
+        config.allowedContent = true;
 };
