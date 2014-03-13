@@ -1,19 +1,20 @@
 {{ define "scripts" }}
 <script src="/third_party/ckeditor/ckeditor.js"></script>
+<script src="/third_party/ckeditor/config.js"></script>
 <script src="/third_party/jquery-slug/jquery.slug.js"></script>
 <script>
-  // update the #slug field automagically from the #title field
-  $('#title').keyup(function() {
-    slug = $.slug( $(this).val() );
-    $('#slug').val(slug);
-  });
-
   // Enable new CKeditor plugin.
   CKEDITOR.replace('editor', {
     extraPlugins: 'image2',
     removePlugins: 'image,forms'
   });
+  CKEDITOR.editorConfig(CKEDITOR.config);
 
+  // update the #slug field automagically from the #title field
+  $('#title').keyup(function() {
+    slug = $.slug( $(this).val() );
+    $('#slug').val(slug);
+  });
 </script>
 {{ end }}
 
