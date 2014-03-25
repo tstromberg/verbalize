@@ -89,8 +89,10 @@ func (s *SavedEntry) Key(c appengine.Context) *datastore.Key {
 
 /* Entry.Context() generates template data from a stored entry */
 func (s *SavedEntry) Context() EntryContext {
-	excerpt := bytes.SplitN(s.Content, []byte(config.Require("more_tag")),
+	annotatedContent := bytes.Replace(s.Content, []byte("<img "), []byte("<img itemtype=\"image\" "), -1)
+	excerpt := bytes.SplitN(annotatedContent, []byte(config.Require("more_tag")),
 		2)[0]
+	log.Printf("ANNOTATED? %s", annotatedContent)
 
 	return EntryContext{
 		Author:         s.Author,
@@ -106,7 +108,7 @@ func (s *SavedEntry) Context() EntryContext {
 		Year:           s.PublishDate.Year(),
 		RfcDate:        s.PublishDate.Format(time.RFC3339),
 		Title:          template.HTML(s.Title),
-		Content:        template.HTML(s.Content),
+		Content:        template.HTML(annotatedContent),
 		Excerpt:        template.HTML(excerpt),
 		EscapedExcerpt: string(excerpt),
 		IsExcerpted:    len(s.Content) != len(excerpt),
