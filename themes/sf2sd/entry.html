@@ -27,16 +27,17 @@
 {{ define "content" }}
   <!-- entry.html content -->
   {{ range .Entries }}
-          <article>
+          <article itemscope="" itemtype="http://schema.org/BlogPosting">
             <header>
-            <h1 class="entry_title"><a href="{{$.BaseURL}}{{.RelativeURL}}">{{.Title}}</a></h1>
-              <div class="author">{{.Author}}</div>
+            <h1 class="entry_title" itemprop="name headline"><a href="{{$.BaseURL}}{{.RelativeURL}}">{{.Title}}</a></h1>
+              <div class="author" itemprop="author" itemscope="" itemtype="http://schema.org/Person">{{.Author}}</div>
+              <time datetime="{{.RfcDate}}" itemprop="datePublished"></time>
               {{ if .IsPage }}
               {{ else }}
               <div class="date">{{.Year}}-{{.Month}}-{{.Day}}</div>
               {{ end }}
               </header>
-            <section class="post">
+              <section class="post" itemprop="articleBody">
               {{.Content}}
               </section>
 

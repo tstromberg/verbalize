@@ -24,19 +24,19 @@
 {{ end }}
 
 {{ define "content" }}
-  <!-- archive.html content -->
   {{ range .Entries }}
-          <article>
+          <article itemscope="" itemtype="http://schema.org/BlogPosting">
           <header>
           <div class="date">{{.Month}} {{.Day}}, {{.Year}}</div>
-            <h1 class="entry_title"><a href="{{$.BaseURL}}{{.RelativeURL}}">{{.Title}}</a>
+            <h1 class="entry_title" itemprop="name headline"><a href="{{$.BaseURL}}{{.RelativeURL}}">{{.Title}}</a>
             </h1>
               <div class="comment_info">
                 <a class="comment_count" href="{{$.BaseURL}}{{.RelativeURL}}#disqus_thread"></a></span>
               </div>
-              <div class="author">{{.Author}}</div>
+              <div class="author" itemprop="author" itemscope="" itemtype="http://schema.org/Person">{{.Author}}</div>
+              <time datetime="{{.RfcDate}}" itemprop="datePublished"></time>
             </header>
-            <section class="post">
+            <section class="post" itemprop="articleBody">
               {{.Excerpt }}
               {{ if .IsExcerpted }}
                 <div class="more"><a href="{{$.BaseURL}}{{.RelativeURL}}">Read on...</a></div>
